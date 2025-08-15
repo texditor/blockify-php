@@ -497,7 +497,7 @@ class Blockify
             foreach ($errorList as $error) {
 
                 $rule = $validator->normalizeRule($rules[$name] ?? []);
-
+                
                 if (empty($this->errors[$name]))
                     $this->errors[$name] = [];
 
@@ -507,12 +507,10 @@ class Blockify
                 $saveError['data'] = $verified;
                 $this->errors[$name][] = $saveError;
 
-
                 if ($error['code'] === 'field_required' || ($rule['required'] ?? false)) {
                     $isRequiredInvalid = true;
                     break 2;
                 }
-
 
                 unset($verified[$name]);
             }
