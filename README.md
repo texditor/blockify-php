@@ -41,6 +41,10 @@ $config = (new Config())
             ->setSourceProtocols(['https', 'http'])
             ->setSourceProtocols(['https', 'http']),
         (new GalleryBlock())
+            // ->setIsMeta(true)
+            // ->setIsMetaCaption(true)
+            // ->setIsMetaDesc(false)
+            ->setMetaPosition('top')
             ->setImageTypes(['image/png', 'image/jpeg'])
             ->setVideoTypes(['video/mp4'])
             ->setVideoAttributes([
@@ -93,6 +97,7 @@ $html = $htmlBuilder->render($blocks);
 ```
 
 ## Available Block Models
+
 The library includes these default block models:
 
 - `ParagraphBlock` - For text paragraphs

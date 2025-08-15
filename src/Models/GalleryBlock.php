@@ -36,7 +36,40 @@ class GalleryBlock extends FilesBlock
         'video/ogg',
     ];
 
+    /**
+     * Video attributes
+     * 
+     * @var array
+     */
     private array $videoAttributes = [];
+
+    /**
+     * The position of the meta section (only render).
+     * 
+     * @var string
+     */
+    private string $metaPosition = 'bottom';
+
+    /**
+     * Determines whether the meta section is enabled or disabled (only render).
+     * 
+     * @var bool
+     */
+    private bool $isMeta = true;
+
+    /**
+     * Determines whether the meta caption (title) section is enabled or disabled (only render).
+     * 
+     * @var bool
+     */
+    private bool $isMetaCaption = true;
+
+    /**
+     * Determines whether the meta description section is enabled or disabled (only render).
+     * 
+     * @var bool
+     */
+    private bool $isMetaDesc = true;
 
     /**
      * Called after file structures are created
@@ -99,6 +132,8 @@ class GalleryBlock extends FilesBlock
     {
         $url = $item['url'] ?? '';
         $type = $item['type'] ?? '';
+        $caption = $item['caption'] ?? '';
+        $desc = $item['desc'] ?? '';
 
         if (empty($url) || empty($type)) {
             return '';
@@ -106,10 +141,27 @@ class GalleryBlock extends FilesBlock
 
         $isImage = in_array($type, $this->getImageTypes());
         $cssStyle = $this->getCssName() . '-item';
+        $meta = '';
+
+        if ($this->isMeta()) {
+            $meta .= '<div class="' . $cssStyle . '-meta">';
+
+            if ($this->isMetaCaption())
+                $meta .= '<div class="' . $cssStyle . '-caption">' . $caption . '</div>';
+
+            if ($this->isMetaDesc())
+                $meta .= '<div class="' . $cssStyle . '-desc">' . $desc . '</div>';
+
+            $meta .= '</div>';
+        }
+
         $html = '<div class="' . $cssStyle . ' ' . $cssStyle . '-' . str_replace('/', '-', $type) . '">';
 
         if ($isImage)
             $html .= '<a href="' . $url . '" class="' . $cssStyle . '-link">';
+
+        if ($this->getMetaPosition() === 'top')
+            $html .= $meta;
 
         $html .= '<div class="' . $cssStyle . '-source">';
 
@@ -121,8 +173,12 @@ class GalleryBlock extends FilesBlock
 
         $html .= '</div>';
 
+        if ($this->getMetaPosition() === 'bottom')
+            $html .= $meta;
+
         if ($isImage)
             $html .= '</a>';
+
         $html .= '</div>';
 
         return $html;
@@ -164,7 +220,7 @@ class GalleryBlock extends FilesBlock
         $attrString = '';
 
         foreach ($attributes as $key  => $attribute) {
-            $attrString .= sprintf(' "%s"="%s"', $key, $attribute);
+            $attrString .= sprintf(' %s="%s"', $key, $attribute);
         }
 
         $picture = '<video class="' . $cssStyle . '-video"' . $attrString . '>';
@@ -206,6 +262,7 @@ class GalleryBlock extends FilesBlock
     public function setVideoTypes(array $types): self
     {
         $this->videoTypes = $types;
+
         return $this;
     }
 
@@ -228,6 +285,7 @@ class GalleryBlock extends FilesBlock
     public function setThumbnailBreakpoint(int $size): self
     {
         $this->thumbnailBreakpoint = $size;
+        
         return $this;
     }
 
@@ -262,5 +320,100 @@ class GalleryBlock extends FilesBlock
     public function getVideoAttributes(): array
     {
         return $this->videoAttributes;
+    }
+
+    /**
+     * Sets the meta position and returns the instance for method chaining.
+     *
+     * @param string $position The position of the meta element (e.g., "top", "bottom").
+     * @return self
+     */
+    public function setMetaPosition(string $position): self
+    {
+        $this->metaPosition = in_array(
+            $position,
+            ['top', 'bottom']
+        ) ? $position : 'bottom';
+
+        return $this;
+    }
+
+    /**
+     * Retrieves the current meta position.
+     *
+     * @return string
+     */
+    public function getMetaPosition(): string
+    {
+        return $this->metaPosition;
+    }
+
+    /**
+     * Enables or disables the meta section entirely.
+     *
+     * @param bool $status Activity status
+     * @return self 
+     */
+    public function setIsMeta(bool $status): self
+    {
+        $this->isMeta = $status;
+
+        return $this;
+    }
+
+    /**
+     * Checks whether the meta section is enabled.
+     *
+     * @return bool
+     */
+    public function isMeta(): bool
+    {
+        return $this->isMeta;
+    }
+
+    /**
+     * Enables or disables the meta caption (title) section.
+     *
+     * @param bool $status Activity status
+     * @return self 
+     */
+    public function setIsMetaCaption(bool $status): self
+    {
+        $this->isMetaCaption = $status;
+
+        return $this;
+    }
+
+    /**
+     * Checks whether the meta caption (title) is enabled.
+     *
+     * @return bool
+     */
+    public function isMetaCaption(): bool
+    {
+        return $this->isMetaCaption;
+    }
+
+    /**
+     * Enables or disables the meta description section.
+     *
+     * @param bool $status Activity status
+     * @return self
+     */
+    public function setIsMetaDesc(bool $status): self
+    {
+        $this->isMetaDesc = $status;
+
+        return $this;
+    }
+
+    /**
+     * Checks whether the meta description is enabled.
+     *
+     * @return bool
+     */
+    public function isMetaDesc(): bool
+    {
+        return $this->isMetaDesc;
     }
 }
