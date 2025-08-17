@@ -38,7 +38,7 @@ $config = (new Config())
           ->setAllowedTags(['a', 'b']),
         new CodeBlock(),
         (new FilesBlock())
-            ->setSourceProtocols(['https', 'http'])
+            ->setSourceHosts(['priveted.com'])
             ->setSourceProtocols(['https', 'http']),
         (new GalleryBlock())
             // ->setIsMeta(true)
