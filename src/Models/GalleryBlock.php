@@ -141,21 +141,22 @@ class GalleryBlock extends FilesBlock
 
         $isImage = in_array($type, $this->getImageTypes());
         $cssStyle = $this->getCssName() . '-item';
+        $ccsType = $this->getCssName() . '-type-' . str_replace('/', '-', $type);
         $meta = '';
 
         if ($this->isMeta()) {
             $meta .= '<div class="' . $cssStyle . '-meta">';
 
             if ($this->isMetaCaption())
-                $meta .= '<div class="' . $cssStyle . '-caption">' . $caption . '</div>';
+                $meta .= '<div class="' . $cssStyle . '-meta-caption">' . $caption . '</div>';
 
             if ($this->isMetaDesc())
-                $meta .= '<div class="' . $cssStyle . '-desc">' . $desc . '</div>';
+                $meta .= '<div class="' . $cssStyle . '-meta-desc">' . $desc . '</div>';
 
             $meta .= '</div>';
         }
 
-        $html = '<div class="' . $cssStyle . ' ' . $cssStyle . '-' . str_replace('/', '-', $type) . '">';
+        $html = '<div class="' . $cssStyle . ' ' . $ccsType . '">';
 
         if ($isImage)
             $html .= '<a href="' . $url . '" class="' . $cssStyle . '-link">';
@@ -193,13 +194,13 @@ class GalleryBlock extends FilesBlock
     protected function renderImage(array $item): string
     {
         $cssStyle = $this->getCssName();
-        $picture = '<picture class="' . $cssStyle . '-picture">';
+        $picture = '<picture class="' . $cssStyle . '-item-picture">';
 
         if (isset($item['thumbnail'])) {
             $picture .= '<source srcset="' . $item['url'] . '" media="(min-width: ' . $this->getThumbnailBreakpoint() . 'px)" />';
-            $picture .= '<img class="' . $cssStyle . '-image" src="' . $item['thumbnail'] . '" alt="' . ($item['caption'] ?? '') . '" />';
+            $picture .= '<img class="' . $cssStyle . '-item-picture-image" src="' . $item['thumbnail'] . '" alt="' . ($item['caption'] ?? '') . '" />';
         } else {
-            $picture .= '<img class="' . $cssStyle . '-image" src="' . $item['url'] . '" alt="' . ($item['caption'] ?? '') . '" />';
+            $picture .= '<img class="' . $cssStyle . '-item-picture-image" src="' . $item['url'] . '" alt="' . ($item['caption'] ?? '') . '" />';
         }
 
         $picture .= '</picture>';
@@ -223,7 +224,7 @@ class GalleryBlock extends FilesBlock
             $attrString .= sprintf(' %s="%s"', $key, $attribute);
         }
 
-        $picture = '<video class="' . $cssStyle . '-video"' . $attrString . '>';
+        $picture = '<video class="' . $cssStyle . '-item-video"' . $attrString . '>';
         $picture .= '<source src="' . $item['url'] . '" type="' . $item['type'] . '" />';
         $picture .= '</video>';
 
@@ -285,7 +286,7 @@ class GalleryBlock extends FilesBlock
     public function setThumbnailBreakpoint(int $size): self
     {
         $this->thumbnailBreakpoint = $size;
-        
+
         return $this;
     }
 
