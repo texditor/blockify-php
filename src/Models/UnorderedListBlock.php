@@ -9,4 +9,5 @@ class UnorderedListBlock extends BlockModel
     protected string $inputName = 'ul';
     protected string $outputName = 'ul';
     protected array $primaryChilds = ['li'];
+    protected bool $isRemoveControlCharacters = true;
 }

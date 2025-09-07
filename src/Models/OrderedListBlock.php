@@ -9,4 +9,5 @@ class OrderedListBlock extends BlockModel
     protected string $inputName = 'ol';
     protected string $outputName = 'ol';
     protected array $primaryChilds = ['li'];
+    protected bool $isRemoveControlCharacters = true;
 }

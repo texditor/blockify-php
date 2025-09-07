@@ -150,6 +150,16 @@ class Blockify
 
         foreach ($blocks as $key => $block) {
             $model = $this->config()->getModel($block['type']);
+
+            if ($model->isRemoveControlCharacters() && !empty($block['data'])) {
+                $block['data'] = json_decode(
+                    $this->removeControlCharacters(
+                        json_encode($block['data'])
+                    ),
+                    true
+                );
+            }
+
             $processedBlock = $model->isCustomBlockStructure()
                 ? $this->processCustomBlock($block, $model)
                 : $this->processDefaultBlock($block, $model);
@@ -435,15 +445,16 @@ class Blockify
     {
         if (is_string($data)) {
             if (!Valid::json($data)) {
-                if ($this->config()->isDev()) {
+                if ($this->config()->isDev())
                     throw new InvalidJsonDataException('Invalid JSON data');
-                }
+
                 return [];
             }
-            return json_decode($data, true) ?: [];
         }
 
-        return $data;
+        $stringifyData = $this->sanitizeJson($data);
+
+        return json_decode($stringifyData, true);
     }
 
     /**
@@ -454,6 +465,81 @@ class Blockify
     public function getData(): array
     {
         return $this->data;
+    }
+
+    /**
+     * Sanitizes JSON by removing or escaping control characters and Unicode formatting marks
+     * 
+     * @param mixed $json Input JSON as string or object/array
+     * @return string|null Sanitized JSON string or null if parsing fails
+     */
+    public function sanitizeJson($json): ?string
+    {
+        $jsonString = is_string($json) ? $json : json_encode($json);
+
+        if ($jsonString === false) {
+            return null;
+        }
+
+        // Remove Unicode escape sequences first (\u200b, \u2028, etc.)
+        $cleaned = preg_replace(
+            '/\\\\u(200[b-f]|202[8-9a-f]|202[f]|205[f]|206[0-9a-f]|206[6-9]|feff)/i',
+            '',
+            $jsonString
+        );
+
+        // First pass: remove actual control characters except tab, newline, and carriage return
+        $cleaned = preg_replace_callback(
+            '/[\x00-\x1F\x7F]/',
+            function ($match) {
+                $code = ord($match[0]);
+                return ($code === 9 || $code === 10 || $code === 13) ? $match[0] : '';
+            },
+            $cleaned
+        );
+
+        // Remove actual Unicode control characters
+        $cleaned = preg_replace(
+            '/[\x{200B}-\x{200F}\x{2028}-\x{202F}\x{205F}-\x{206F}\x{FEFF}\x{2066}-\x{2069}]/u',
+            '',
+            $cleaned
+        );
+
+        $cleaned = preg_replace_callback(
+            '/(?<!\\\\)\\\\u\\{[^}]*\\}|(?<!\\\\)\\\\[a-zA-Z]\\{[^}]*\\}/',
+            function ($match) {
+                return '';
+            },
+            $cleaned
+        );
+
+        $parsed = json_decode($cleaned, true);
+
+        if (json_last_error() === JSON_ERROR_NONE) {
+            return json_encode($parsed);
+        }
+
+        // Final cleanup: remove any remaining non-printable characters and escape sequences
+        $finalCleaned = preg_replace('/[^\x20-\x7E\t\n\r]|\\\\u(200[b-f]|202[8-9a-f]|202[f]|205[f]|206[0-9a-f]|206[6-9]|feff)/i', '', $cleaned);
+
+        $parsedFinal = json_decode($finalCleaned, true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            return json_encode($parsedFinal);
+        }
+
+        return null;
+    }
+
+    /**
+     * Completely removes control characters and special Unicode formatting marks
+     * 
+     * @param string $input Input string to clean
+     * @return string Cleaned string without control characters
+     */
+    public function removeControlCharacters(string $input): string
+    {
+        $cleaned = preg_replace('/[\x00-\x1F\x7F]/u', '', $input);
+        return preg_replace('/(?<!\\\\)\\\\([nrt])/', '', $cleaned);
     }
 
     /**
@@ -497,7 +583,7 @@ class Blockify
             foreach ($errorList as $error) {
 
                 $rule = $validator->normalizeRule($rules[$name] ?? []);
-                
+
                 if (empty($this->errors[$name]))
                     $this->errors[$name] = [];
 
