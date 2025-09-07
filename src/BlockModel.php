@@ -2,9 +2,10 @@
 
 namespace Texditor\Blockify;
 
-use Cleup\Helpers\Arr;
+use Texditor\Blockify\Interfaces\BlockModelInterface;
+use Texditor\Blockify\Interfaces\ConfigInterface;
 
-class BlockModel
+class BlockModel implements BlockModelInterface
 {
     /** 
      * Internal name used to identify this model in input data
@@ -146,27 +147,29 @@ class BlockModel
      */
     protected bool $isRemoveControlCharacters = false;
 
-    /**
-     * @var Config
-     */
-    private $config;
+    private ?ConfigInterface $config = null;
 
     /**
      * Get current configuration
      * 
-     * @return Config
+     * @return ConfigInterface
      */
-    public function config(): Config
+    public function config(): ConfigInterface
     {
+        if ($this->config === null) {
+            throw new \RuntimeException('Config not set. Call setConfig() first.');
+        }
+
         return $this->config;
     }
 
     /**
      * Set current configuration
      * 
+     * @param ConfigInterface $config
      * @return self
      */
-    public function setConfig(Config $config): self
+    public function setConfig(ConfigInterface $config): self
     {
         $this->config = $config;
 
@@ -181,7 +184,7 @@ class BlockModel
     /**
      * Hook method for model initialization (can be overridden in child classes)
      */
-    public function onLoad() {}
+    public function onLoad(): void {}
 
     /**
      * Set whether text content should be HTML-escaped
@@ -212,7 +215,7 @@ class BlockModel
      * @param array $tags Array of allowed tag names
      * @return self
      */
-    public function setAllowedTags(array $tags = [])
+    public function setAllowedTags(array $tags): self
     {
         $this->allowedTags = $tags;
 
@@ -235,7 +238,7 @@ class BlockModel
      * @param array $tags Array of primary child tag names
      * @return self
      */
-    protected function setPrimaryChilds(array $tags = [])
+    public function setPrimaryChilds(array $tags): self
     {
         $this->primaryChilds = $tags;
 
@@ -304,7 +307,7 @@ class BlockModel
      * @param array $structure Validation rules array
      * @return self
      */
-    public function setBlockStructure(array $structure)
+    public function setBlockStructure(array $structure): self
     {
         $this->blockStructure = $structure;
 
@@ -327,7 +330,7 @@ class BlockModel
      * @param array $structure Validation rules array
      * @return self
      */
-    public function setItemStructure(array $structure)
+    public function setItemStructure(array $structure): self
     {
         $this->itemStructure = $structure;
 
@@ -373,7 +376,7 @@ class BlockModel
      * @param bool $status True to enable custom structure
      * @return self
      */
-    public function setIsCustomBlockStructure(bool $status)
+    public function setIsCustomBlockStructure(bool $status): self
     {
         $this->isCustomBlockStructure = $status;
 
@@ -396,7 +399,7 @@ class BlockModel
      * @param bool $status True to enable custom structure
      * @return self
      */
-    public function setIsCustomItemStructure(bool $status)
+    public function setIsCustomItemStructure(bool $status): self
     {
         $this->isCustomItemStructure = $status;
 
@@ -419,7 +422,7 @@ class BlockModel
      * @param bool $status Set the value to true to allow deletion.
      * @return self
      */
-    public function setIsRemoveControlCharacters(bool $status)
+    public function setIsRemoveControlCharacters(bool $status): self
     {
         $this->isRemoveControlCharacters = $status;
 
@@ -616,7 +619,7 @@ class BlockModel
      */
     public function renderBlock(array $block): string
     {
-        if ($this->isCustomRenderBlock($block['type'] ?? '')) {
+        if ($this->isCustomRenderBlock()) {
             return $this->renderCustomBlock($block);
         }
 
@@ -713,7 +716,7 @@ class BlockModel
      * @param string $attributes Tag attributes
      * @return string
      */
-    private function renderTags(
+    protected function renderTags(
         string $tagName,
         string $content,
         string $attributes = ''

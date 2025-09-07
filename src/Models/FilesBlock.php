@@ -35,7 +35,7 @@ class FilesBlock extends BlockModel
      * Called when the block is loaded
      * Initializes block and item structures
      */
-    public function onLoad()
+    public function onLoad(): void
     {
         $this->createBlockStructure();
         $this->createItemStructure();
@@ -75,7 +75,6 @@ class FilesBlock extends BlockModel
 
             if (!empty($allowedHosts))
                 $urlRule['allowedHost'] = $allowedHosts;
-
         }
 
         if (!empty($regex)) {

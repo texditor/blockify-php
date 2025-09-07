@@ -2,19 +2,23 @@
 
 namespace Texditor\Blockify;
 
-class HtmlBuilder
+use Texditor\Blockify\Interfaces\BlockModelInterface;
+use Texditor\Blockify\Interfaces\ConfigInterface;
+use Texditor\Blockify\Interfaces\HtmlBuilderInterface;
+
+class HtmlBuilder implements HtmlBuilderInterface
 {
     /**
-     * @var Config
+     * @var ConfigInterface
      */
     private $config;
 
     /**
-     * Initialize Blockify processor with configuration
+     * Initialize HtmlBuilder with configuration
      * 
-     * @param Config $config
+     * @param ConfigInterface $config
      */
-    public function __construct(Config $config)
+    public function __construct(ConfigInterface $config)
     {
         $this->config = $config;
     }
@@ -22,9 +26,9 @@ class HtmlBuilder
     /**
      * Get current configuration
      * 
-     * @return Config
+     * @return ConfigInterface
      */
-    public function config(): Config
+    public function config(): ConfigInterface
     {
         return $this->config;
     }
@@ -42,7 +46,10 @@ class HtmlBuilder
         foreach ($blocks as $block) {
             if (!empty($block['type']) && !empty($block['data'])) {
                 $model = $this->config()->getModel($block['type']);
-                $html .= $model->renderBlock($block);
+
+                if ($model instanceof BlockModelInterface) {
+                    $html .= $model->renderBlock($block);
+                }
             }
         }
 
