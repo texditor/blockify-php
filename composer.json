@@ -1,6 +1,6 @@
 {
   "name": "texditor/blockify-php",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Working with the Texditor block data. Validation and sanitization of blocks.",
   "keywords": [
     "blocks",
