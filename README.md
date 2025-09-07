@@ -92,10 +92,20 @@ if (!$blockify->isValid()) {
 use Texditor\Blockify\HtmlBuilder;
 
 //...
-
+// Initializes the HTML builder with security and rendering settings.
 $htmlBuilder = new HtmlBuilder($config);
-// Use only prepared and safe blocks.
+
+// Renders all provided blocks into a safe HTML string.
 $html = $htmlBuilder->render($blocks);
+
+// Renders all blocks into plain text, stripping all HTML tags.
+$text = $htmlBuilder->renderAsText($blocks);
+
+// Renders only the specified block types ('p', 'h1') into HTML.
+$html = $htmlBuilder->renderOnly($blocks, ["p", "h1"]);
+
+// Renders only the specified block types into plain text.
+$text = $htmlBuilder->renderOnly($blocks, ["p", "h1"], true);
 ```
 
 ## Available Block Models
