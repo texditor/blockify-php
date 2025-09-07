@@ -75,6 +75,14 @@ class BlockModel
      */
     protected array $sourceProtocols = ['https', 'http', 'ftp'];
 
+
+    /**
+     * Regular expressions of the source
+     * 
+     * @var array
+     */
+    protected array $sourceRegex = [];
+
     /** 
      * Allowed hostnames for external resources (empty allows all)
      * 
@@ -168,15 +176,12 @@ class BlockModel
     /**
      * Constructor that triggers the onLoad hook for model initialization
      */
-    public function __construct()
-    {
-        $this->onLoad();
-    }
+    public function __construct() {}
 
     /**
      * Hook method for model initialization (can be overridden in child classes)
      */
-    protected function onLoad() {}
+    public function onLoad() {}
 
     /**
      * Set whether text content should be HTML-escaped
@@ -461,6 +466,29 @@ class BlockModel
     public function setSourceProtocols(array $protocols): self
     {
         $this->sourceProtocols = $protocols;
+
+        return $this;
+    }
+
+    /**
+     * Get source regular expressions
+     *
+     * @return array
+     */
+    public function getSourceRegex(): array
+    {
+        return $this->sourceRegex;
+    }
+
+    /**
+     * Set source regular expressions
+     *
+     * @param array $protocols List of regular expressions
+     * @return self
+     */
+    public function setSourceRegex(array $regex = []): self
+    {
+        $this->sourceRegex = $regex;
 
         return $this;
     }

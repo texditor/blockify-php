@@ -452,9 +452,10 @@ class Blockify
             }
         }
 
-        $stringifyData = $this->sanitizeJson($data);
-
-        return json_decode($stringifyData, true);
+        return json_decode(
+            $this->sanitizeJson($data) ?? "[]",
+            true
+        );
     }
 
     /**
@@ -589,8 +590,8 @@ class Blockify
 
                 $saveError = $error;
                 $saveError['rule'] = $rule;
-                $saveError['item'] = $verified[$name];
-                $saveError['data'] = $verified;
+                $saveError['item'] = $verified[$name] ?? '';
+                $saveError['data'] = $verified ?? '';
                 $this->errors[$name][] = $saveError;
 
                 if ($error['code'] === 'field_required' || ($rule['required'] ?? false)) {

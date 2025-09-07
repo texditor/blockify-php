@@ -35,7 +35,7 @@ class FilesBlock extends BlockModel
      * Called when the block is loaded
      * Initializes block and item structures
      */
-    protected function onLoad()
+    public function onLoad()
     {
         $this->createBlockStructure();
         $this->createItemStructure();
@@ -63,15 +63,33 @@ class FilesBlock extends BlockModel
     private function createItemStructure()
     {
         $allowedHosts = $this->getSourceHosts();
-        $urlRule =  [
-            'required' => true,
-            'url' => true,
-            'allowedProtocol' => $this->getSourceProtocols()
-        ];
+        $allowedProtocols = $this->getSourceProtocols();
+        $regex = $this->getSourceRegex();
+        $urlRule =  ['required' => true];
+
+        if (!empty($allowedHosts) && !empty($allowedProtocols))
+            $urlRule['url'] = true;
+
+        if (!empty($allowedHosts)) {
+            $urlRule['allowedProtocol'] = $allowedProtocols;
+        }
 
         if (!empty($allowedHosts)) {
             $urlRule['allowedHost'] = $allowedHosts;
         }
+
+        if (!empty($regex)) {
+            $urlRule['before'] = function ($data) use ($regex) {
+                foreach ($regex as $reg) {
+                    if (!!preg_match($reg, $data))
+                        return $data;
+                    break;
+                }
+
+                return false;
+            };
+        }
+
 
         $this->setItemStructure([
             'url' => $urlRule,

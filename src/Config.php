@@ -53,7 +53,8 @@ class Config
             if ($model instanceof BlockModel) {
                 $name = $model->getInputName();
                 $model->setConfig($this);
-
+                $model->onLoad();
+       
                 if (!empty($name))
                     $this->blockModels[$name] = $model;
             }
