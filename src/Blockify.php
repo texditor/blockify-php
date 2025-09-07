@@ -6,29 +6,31 @@ use Cleup\Guard\Purifier\Utils\Valid;
 use Cleup\Guard\Purifier\Validation;
 use Cleup\Helpers\Arr;
 use Texditor\Blockify\Exceptions\InvalidJsonDataException;
+use Texditor\Blockify\Interfaces\BlockModelInterface;
+use Texditor\Blockify\Interfaces\ConfigInterface;
 
 class Blockify
 {
     /**
      * @var array
      */
-    private $data = [];
+    protected $data = [];
     /**
      * @var array
      */
-    private $errors = [];
+    protected $errors = [];
 
     /**
-     * @var Config
+     * @var ConfigInterface
      */
     private $config;
 
     /**
      * Initialize Blockify processor with configuration
      * 
-     * @param Config $config
+     * @param ConfigInterface $config
      */
-    public function __construct(Config $config)
+    public function __construct(ConfigInterface $config)
     {
         $this->config = $config;
     }
@@ -36,9 +38,9 @@ class Blockify
     /**
      * Get current configuration
      * 
-     * @return Config
+     * @return ConfigInterface
      */
-    public function config(): Config
+    public function config(): ConfigInterface
     {
         return $this->config;
     }
@@ -49,24 +51,24 @@ class Blockify
      * @param mixed $item The block item to validate
      * @return bool 
      */
-    private function isValidBlock($item): bool
+    protected function isValidBlock($item): bool
     {
         return isset($item['type']) &&
             is_string($item['type']) &&
+            $this->config()->getModel($item['type']) !== null &&
             !empty($item['data']) &&
             is_array($item['data']) &&
-            Arr::isList($item['data']) &&
-            $this->config()->getModel($item['type']);
+            Arr::isList($item['data']);
     }
 
     /**
      * Check if an array item is valid according to the model rules
      *
      * @param array $item The item to validate
-     * @param BlockModel $model The model defining validation rules
+     * @param BlockModelInterface $model The model defining validation rules
      * @return bool
      */
-    private function isValidArrayItem(array $item, BlockModel $model): bool
+    protected function isValidArrayItem(array $item, BlockModelInterface $model): bool
     {
         return !empty($item['type'])
             && !empty($item['data'])
@@ -83,7 +85,7 @@ class Blockify
      * @param mixed $next Next item
      * @return bool
      */
-    private function shouldMergeTextItems($current, $next): bool
+    protected function shouldMergeTextItems($current, $next): bool
     {
         return is_string($current) && is_string($next);
     }
@@ -93,13 +95,13 @@ class Blockify
      *
      * @param mixed $current Current item
      * @param mixed $next Next item
-     * @param BlockModel $model The model defining merge rules
+     * @param BlockModelInterface $model The model defining merge rules
      * @return bool
      */
-    private function shouldMergeArrayItems(
+    protected function shouldMergeArrayItems(
         $current,
         $next,
-        BlockModel $model
+        BlockModelInterface $model
     ): bool {
         return is_array($current)
             && is_array($next)
@@ -115,7 +117,7 @@ class Blockify
      * @param array $rawData The raw input data containing blocks
      * @return array
      */
-    private function prepareBlocks(array $rawData): array
+    protected function prepareBlocks(array $rawData): array
     {
         $output = [];
 
@@ -144,7 +146,7 @@ class Blockify
      * @param array $blocks The prepared blocks to process
      * @return array
      */
-    private function processBlocks(array $blocks): array
+    protected function processBlocks(array $blocks): array
     {
         $output = [];
 
@@ -183,10 +185,10 @@ class Blockify
      * Process a block using the default structure rules.
      *
      * @param array $block The block to process
-     * @param BlockModel $model The model defining the processing rules
+     * @param BlockModelInterface $model The model defining the processing rules
      * @return array
      */
-    private function processDefaultBlock(array $block, BlockModel $model): array
+    protected function processDefaultBlock(array $block, BlockModelInterface $model): array
     {
         $outputItem = $block;
         $outputItem['data'] = [];
@@ -208,10 +210,10 @@ class Blockify
      * Process a primary child item according to model rules.
      *
      * @param mixed $itemData The item data to process
-     * @param BlockModel $model The model defining processing rules
+     * @param BlockModelInterface $model The model defining processing rules
      * @param array
      */
-    private function processPrimaryChild($item, BlockModel $model, array &$output): void
+    protected function processPrimaryChild($item, BlockModelInterface $model, array &$output): void
     {
         if ($this->isValidPrimaryChild($item, $model)) {
 
@@ -240,10 +242,10 @@ class Blockify
      * Check if an item is a valid primary child.
      *
      * @param mixed $itemData The item data to validate
-     * @param BlockModel $model The model defining validation rules
+     * @param BlockModelInterface $model The model defining validation rules
      * @return bool
      */
-    private function isValidPrimaryChild($itemData, BlockModel $model): bool
+    protected function isValidPrimaryChild($itemData, BlockModelInterface $model): bool
     {
         return is_array($itemData) &&
             !empty($itemData['type']) &&
@@ -258,10 +260,10 @@ class Blockify
      * Process a regular item according to model rules.
      *
      * @param mixed $itemData The item data to process
-     * @param BlockModel $model The model defining processing rules
+     * @param BlockModelInterface $model The model defining processing rules
      * @param array &$output Reference to the output array to store results
      */
-    private function processRegularItem($itemData, BlockModel $model, array &$output): void
+    protected function processRegularItem($itemData, BlockModelInterface $model, array &$output): void
     {
         $notNullData = $this->processItemData($itemData, $model);
 
@@ -274,10 +276,10 @@ class Blockify
      * Process a block using custom structure rules.
      *
      * @param array $block The block to process
-     * @param BlockModel $model The model defining the processing rules
+     * @param BlockModelInterface $model The model defining the processing rules
      * @return array
      */
-    private function processCustomBlock(array $block, BlockModel $model): array
+    protected function processCustomBlock(array $block, BlockModelInterface $model): array
     {
         $preparedBlock = $this->filterDataWithRules(
             $block,
@@ -307,7 +309,7 @@ class Blockify
         return $preparedBlock;
     }
 
-    private function processItemData(array|string $itemData, BlockModel $model): array|string|null
+    protected function processItemData(array|string $itemData, BlockModelInterface $model): array|string|null
     {
         return is_string($itemData)
             ? $this->processTextItem($itemData, $model)
@@ -318,10 +320,10 @@ class Blockify
      * Merge similar adjacent items according to model rules
      * 
      * @param array $items Items to process
-     * @param BlockModel $model Model defining rules
+     * @param BlockModelInterface $model Model defining rules
      * @return array
      */
-    private function mergeSimilarItems(array $items, BlockModel $model): array
+    protected function mergeSimilarItems(array $items, BlockModelInterface $model): array
     {
         if (!$model->isMergeSimilar()) {
             return array_values($items);
@@ -355,10 +357,10 @@ class Blockify
      * Process a text item according to model rules.
      *
      * @param string $text The text to process
-     * @param BlockModel $model The model defining processing rules
+     * @param BlockModelInterface $model The model defining processing rules
      * @return string|null
      */
-    private function processTextItem(string $text, BlockModel $model): ?string
+    protected function processTextItem(string $text, BlockModelInterface $model): ?string
     {
         $text = trim($model->isEscapeText()
             ? escape($text)
@@ -371,10 +373,10 @@ class Blockify
      * Process an array item according to model rules
      *
      * @param array $itemData The item data to process
-     * @param BlockModel $model The model defining processing rules
+     * @param BlockModelInterface $model The model defining processing rules
      * @return array|null
      */
-    private function processArrayItem(array $itemData, BlockModel $model): ?array
+    protected function processArrayItem(array $itemData, BlockModelInterface $model): ?array
     {
         if (!$this->isValidArrayItem($itemData, $model)) {
             return null;
@@ -441,7 +443,7 @@ class Blockify
      * @param mixed $data Input data to parse
      * @return array
      */
-    private function parseInputData($data): array
+    protected function parseInputData($data): array
     {
         if (is_string($data)) {
             if (!Valid::json($data)) {
@@ -547,10 +549,10 @@ class Blockify
      * Filter attributes according to model rules
      * 
      * @param array &$item Reference to item containing attributes
-     * @param BlockModel $model Model defining rules
+     * @param BlockModelInterface $model Model defining rules
      * @return array Filtered attributes
      */
-    public function filterAttributes(array &$item, BlockModel $model): array
+    public function filterAttributes(array &$item, BlockModelInterface $model): array
     {
         $validated = $this->filterDataWithRules(
             $item['attr'],

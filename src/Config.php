@@ -3,13 +3,15 @@
 namespace Texditor\Blockify;
 
 use Cleup\Helpers\Arr;
+use Texditor\Blockify\Interfaces\BlockModelInterface;
+use Texditor\Blockify\Interfaces\ConfigInterface;
 
-class Config
+class Config implements ConfigInterface
 {
     /**
      * Array of registered block models
      * 
-     * @var BlockModel[]
+     * @var BlockModelInterface[]
      */
     private $blockModels = [];
 
@@ -44,20 +46,18 @@ class Config
     /**
      * Add one or more block models to the configuration
      *
-     * @param BlockModel ...$models
+     * @param BlockModelInterface ...$models
      * @return self
      */
-    public function addModels(...$models)
+    public function addModels(BlockModelInterface ...$models): self
     {
         foreach ($models as $model) {
-            if ($model instanceof BlockModel) {
-                $name = $model->getInputName();
-                $model->setConfig($this);
-                $model->onLoad();
-       
-                if (!empty($name))
-                    $this->blockModels[$name] = $model;
-            }
+            $name = $model->getInputName();
+            $model->setConfig($this);
+            $model->onLoad();
+
+            if (!empty($name))
+                $this->blockModels[$name] = $model;
         }
 
         return $this;
@@ -77,9 +77,9 @@ class Config
      * Get a specific block model by its input name
      *
      * @param string $inputName The name of the model to retrieve
-     * @return BlockModel|null The requested model or null if not found
+     * @return BlockModelInterface|null The requested model or null if not found
      */
-    public function getModel(string $inputName): ?BlockModel
+    public function getModel(string $inputName): ?BlockModelInterface
     {
         return $this->blockModels[$inputName] ?? null;
     }
