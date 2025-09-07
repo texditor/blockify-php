@@ -490,19 +490,6 @@ class Blockify
             '',
             $jsonString
         );
- 
-        $cleaned = str_replace([
-            "\u{00A0}", // NO-BREAK SPACE
-            "\u{202F}", // NARROW NO-BREAK SPACE
-            "\u{2007}", // FIGURE SPACE
-            "\u{2060}", // WORD JOINER
-            "\u{FEFF}", // ZERO WIDTH NO-BREAK SPACE (BOM)
-            "\u{200B}", // ZERO WIDTH SPACE
-            "\u{2002}", // EN SPACE
-            "\u{2003}", // EM SPACE
-            "\u{2009}", // THIN SPACE
-            "\u{200A}", // HAIR SPACE
-        ], ' ', $cleaned);
 
         // First pass: remove actual control characters except tab, newline, and carriage return
         $cleaned = preg_replace_callback(
@@ -521,14 +508,7 @@ class Blockify
             $cleaned
         );
 
-        $cleaned = preg_replace_callback(
-            '/(?<!\\\\)\\\\u\\{[^}]*\\}|(?<!\\\\)\\\\[a-zA-Z]\\{[^}]*\\}/',
-            function ($match) {
-                return '';
-            },
-            $cleaned
-        );
-
+        $cleaned = preg_replace('/(?<!\\\\)\\\\u\\{[^}]*\\}|(?<!\\\\)\\\\[a-zA-Z]\\{[^}]*\\}/', '', $cleaned);
         $parsed = json_decode($cleaned, true);
 
         if (json_last_error() === JSON_ERROR_NONE) {
