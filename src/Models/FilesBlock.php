@@ -75,6 +75,7 @@ class FilesBlock extends BlockModel
 
             if (!empty($allowedHosts))
                 $urlRule['allowedHost'] = $allowedHosts;
+
         }
 
         if (!empty($regex)) {
