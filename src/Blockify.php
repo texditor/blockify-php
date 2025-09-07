@@ -362,9 +362,9 @@ class Blockify
      */
     protected function processTextItem(string $text, BlockModelInterface $model): ?string
     {
-        $text = trim($model->isEscapeText()
+        $text = $model->isEscapeText()
             ? escape($text)
-            : $text);
+            : $text;
 
         return is_not_empty($text) ? $text : null;
     }
@@ -496,7 +496,7 @@ class Blockify
             '/[\x00-\x1F\x7F]/',
             function ($match) {
                 $code = ord($match[0]);
-                return ($code === 9 || $code === 10 || $code === 13) ? $match[0] : '';
+                return ($code === 9 || $code === 10 || $code === 13) ? $match[0] : ' ';
             },
             $cleaned
         );
