@@ -67,15 +67,14 @@ class FilesBlock extends BlockModel
         $regex = $this->getSourceRegex();
         $urlRule =  ['required' => true];
 
-        if (!empty($allowedHosts) && !empty($allowedProtocols))
+        if (!empty($allowedHosts) && !empty($allowedProtocols)) {
             $urlRule['url'] = true;
 
-        if (!empty($allowedHosts)) {
-            $urlRule['allowedProtocol'] = $allowedProtocols;
-        }
+            if (!empty($allowedHosts))
+                $urlRule['allowedProtocol'] = $allowedProtocols;
 
-        if (!empty($allowedHosts)) {
-            $urlRule['allowedHost'] = $allowedHosts;
+            if (!empty($allowedHosts))
+                $urlRule['allowedHost'] = $allowedHosts;
         }
 
         if (!empty($regex)) {
