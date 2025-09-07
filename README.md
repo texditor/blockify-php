@@ -39,7 +39,9 @@ $config = (new Config())
         new CodeBlock(),
         (new FilesBlock())
             ->setSourceProtocols(['https', 'http'])
-            ->setSourceProtocols(['https', 'http']),
+            ->setSourceProtocols(['https', 'http'])
+            // or only locally
+            ->setSourceRegex(["/^\/uploads\/.*\.(png|jpg|jpeg|gif)$/"]),
         (new GalleryBlock())
             // ->setIsMeta(true)
             // ->setIsMetaCaption(true)
