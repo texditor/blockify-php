@@ -178,7 +178,7 @@ class Blockify
             $output[$key] = $processedBlock;
         }
 
-        return $output;
+        return array_values($output);
     }
 
     /**
@@ -428,7 +428,7 @@ class Blockify
     {
         $input = $this->parseInputData($data);
 
-        if (Arr::isList($input) && !empty($input)) {
+        if (!empty($input) && Arr::isList($input)) {
             $this->data = $this->processBlocks(
                 $this->prepareBlocks($input)
             );
