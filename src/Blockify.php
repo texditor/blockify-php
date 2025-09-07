@@ -156,7 +156,7 @@ class Blockify
             if ($model->isRemoveControlCharacters() && !empty($block['data'])) {
                 $block['data'] = json_decode(
                     $this->removeControlCharacters(
-                        json_encode($block['data'])
+                        json_encode($block['data'], JSON_UNESCAPED_UNICODE)
                     ),
                     true
                 );
@@ -478,7 +478,7 @@ class Blockify
      */
     public function sanitizeJson($json): ?string
     {
-        $jsonString = is_string($json) ? $json : json_encode($json);
+        $jsonString = is_string($json) ? $json : json_encode($json, JSON_UNESCAPED_UNICODE);
 
         if ($jsonString === false) {
             return null;
@@ -490,6 +490,19 @@ class Blockify
             '',
             $jsonString
         );
+ 
+        $cleaned = str_replace([
+            "\u{00A0}", // NO-BREAK SPACE
+            "\u{202F}", // NARROW NO-BREAK SPACE
+            "\u{2007}", // FIGURE SPACE
+            "\u{2060}", // WORD JOINER
+            "\u{FEFF}", // ZERO WIDTH NO-BREAK SPACE (BOM)
+            "\u{200B}", // ZERO WIDTH SPACE
+            "\u{2002}", // EN SPACE
+            "\u{2003}", // EM SPACE
+            "\u{2009}", // THIN SPACE
+            "\u{200A}", // HAIR SPACE
+        ], ' ', $cleaned);
 
         // First pass: remove actual control characters except tab, newline, and carriage return
         $cleaned = preg_replace_callback(
@@ -519,15 +532,15 @@ class Blockify
         $parsed = json_decode($cleaned, true);
 
         if (json_last_error() === JSON_ERROR_NONE) {
-            return json_encode($parsed);
+            return json_encode($parsed, JSON_UNESCAPED_UNICODE);
         }
 
         // Final cleanup: remove any remaining non-printable characters and escape sequences
         $finalCleaned = preg_replace('/[^\x20-\x7E\t\n\r]|\\\\u(200[b-f]|202[8-9a-f]|202[f]|205[f]|206[0-9a-f]|206[6-9]|feff)/i', '', $cleaned);
-
         $parsedFinal = json_decode($finalCleaned, true);
+
         if (json_last_error() === JSON_ERROR_NONE) {
-            return json_encode($parsedFinal);
+            return json_encode($parsedFinal, JSON_UNESCAPED_UNICODE);
         }
 
         return null;
