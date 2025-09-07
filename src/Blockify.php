@@ -508,7 +508,6 @@ class Blockify
             $cleaned
         );
 
-        $cleaned = preg_replace('/(?<!\\\\)\\\\u\\{[^}]*\\}|(?<!\\\\)\\\\[a-zA-Z]\\{[^}]*\\}/', '', $cleaned);
         $parsed = json_decode($cleaned, true);
 
         if (json_last_error() === JSON_ERROR_NONE) {
