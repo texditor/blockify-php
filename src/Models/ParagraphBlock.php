@@ -8,4 +8,5 @@ class ParagraphBlock extends BlockModel
 {
     protected string $inputName = 'p';
     protected string $outputName = 'p';
+    protected bool $isRemoveControlCharacters = true;
 }

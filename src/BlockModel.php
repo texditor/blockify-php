@@ -131,6 +131,13 @@ class BlockModel
      */
     protected bool $isCustomRenderBlock = false;
 
+    /** 
+     * Allow deletion of control characters.
+     * 
+     * @var bool
+     */
+    protected bool $isRemoveControlCharacters = false;
+
     /**
      * @var Config
      */
@@ -187,7 +194,7 @@ class BlockModel
     /**
      * Check if text escaping is enabled
      *
-     * @return bool True if text escaping is active
+     * @return bool
      */
     public function isEscapeText(): bool
     {
@@ -210,7 +217,7 @@ class BlockModel
     /**
      * Get all allowed tags
      *
-     * @return array List of allowed tag names
+     * @return array
      */
     public function getAllowedTags(): array
     {
@@ -233,7 +240,7 @@ class BlockModel
     /**
      * Get all primary child elements
      *
-     * @return array List of primary child tag names
+     * @return array
      */
     public function getPrimaryChilds(): array
     {
@@ -256,7 +263,7 @@ class BlockModel
     /**
      * Get the input name identifier
      *
-     * @return string The model's input identifier
+     * @return string
      */
     public function getInputName(): string
     {
@@ -279,7 +286,7 @@ class BlockModel
     /**
      * Get the output name
      *
-     * @return string The model's output name
+     * @return string
      */
     public function getOutputName(): string
     {
@@ -302,7 +309,7 @@ class BlockModel
     /**
      * Get the block structure validation rules
      *
-     * @return array Current block structure rules
+     * @return array
      */
     public function getBlockStructure(): array
     {
@@ -325,7 +332,7 @@ class BlockModel
     /**
      * Get the item structure validation rules
      *
-     * @return array Current item structure rules
+     * @return array
      */
     public function getItemStructure(): array
     {
@@ -348,7 +355,7 @@ class BlockModel
     /**
      * Check if similar items merging is enabled
      *
-     * @return bool True if merging is active
+     * @return bool
      */
     public function isMergeSimilar(): bool
     {
@@ -371,7 +378,7 @@ class BlockModel
     /**
      * Check if custom block structure is enabled
      *
-     * @return bool True if custom structure is active
+     * @return bool
      */
     public function isCustomBlockStructure(): bool
     {
@@ -394,7 +401,7 @@ class BlockModel
     /**
      * Check if custom item structure is enabled
      *
-     * @return bool True if custom structure is active
+     * @return bool 
      */
     public function isCustomItemStructure(): bool
     {
@@ -402,10 +409,33 @@ class BlockModel
     }
 
     /**
+     * Specify whether this model removes the control special characters.
+     *
+     * @param bool $status Set the value to true to allow deletion.
+     * @return self
+     */
+    public function setIsRemoveControlCharacters(bool $status)
+    {
+        $this->isRemoveControlCharacters = $status;
+
+        return $this;
+    }
+
+    /**
+     * Check if the removal of managed special characters is enabled.
+     *
+     * @return bool
+     */
+    public function isRemoveControlCharacters(): bool
+    {
+        return $this->isRemoveControlCharacters;
+    }
+
+    /**
      * Get attribute validation rules for a specific tag
      *
      * @param string $tag The tag name
-     * @return array Validation rules for the tag's attributes
+     * @return array
      */
     public function getTagAttributeRules(string $tag): array
     {
@@ -415,7 +445,7 @@ class BlockModel
     /**
      * Get allowed source protocols
      *
-     * @return array List of allowed protocols
+     * @return array
      */
     public function getSourceProtocols(): array
     {
@@ -438,7 +468,7 @@ class BlockModel
     /**
      * Get allowed source hosts
      *
-     * @return array List of allowed hosts
+     * @return array
      */
     public function getSourceHosts(): array
     {
@@ -461,7 +491,7 @@ class BlockModel
     /**
      * Get allowed source MIME types
      *
-     * @return array List of allowed MIME types
+     * @return array
      */
     public function getSourceMimeTypes(): array
     {
@@ -497,7 +527,7 @@ class BlockModel
     /**
      * Get additional CSS classes for the block
      *
-     * @return string Current CSS classes
+     * @return string
      */
     public function getCssClasses(): string
     {
@@ -508,7 +538,7 @@ class BlockModel
      * Custom item processing hook (can be overridden in child classes)
      *
      * @param array|string $item The item to process
-     * @return array|string Processed item
+     * @return array|string
      */
     public function eachCustomItem(array|string $item): array|string
     {
@@ -541,7 +571,7 @@ class BlockModel
     /**
      * Get the base CSS name for the block
      * 
-     * @return string CSS name prefix
+     * @return string
      */
     public function getCssName(): string
     {
@@ -554,7 +584,7 @@ class BlockModel
      * Render the entire block with its contents
      *
      * @param array $block The block data to render
-     * @return string Rendered HTML
+     * @return string
      */
     public function renderBlock(array $block): string
     {
@@ -578,7 +608,7 @@ class BlockModel
      * Render custom block types
      *
      * @param array $block Block data
-     * @return string Rendered HTML
+     * @return string
      */
     protected function renderCustomBlock(array $block): string
     {
@@ -610,7 +640,7 @@ class BlockModel
      * Render a nested block item
      *
      * @param array $item Item data
-     * @return string Rendered HTML
+     * @return string
      */
     protected function renderNestedItem(array $item): string
     {

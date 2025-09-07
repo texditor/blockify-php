@@ -9,4 +9,5 @@ class HeaderBlock extends BlockModel
     protected string $inputName = 'h1';
     protected string $outputName = 'h1';
     protected array $allowedTags = ['a', 'sub', 'sup'];
+    protected bool $isRemoveControlCharacters = true;
 }
