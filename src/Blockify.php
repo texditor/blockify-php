@@ -79,6 +79,89 @@ class Blockify
     }
 
     /**
+     * Normalizes input string by removing invisible characters and handling different modes
+     * 
+     * @param string $input The input string to normalize
+     * @param string $mode Processing mode: 'text' for regular text or 'preformatted' for preserving formatting
+     * @return string
+     */
+    public function normalizeInput(string $input, string $mode = 'text'): string
+    {
+        if (empty($input)) {
+            return $input;
+        }
+
+        $text = $input;
+
+        if (substr($text, 0, 3) === "\xEF\xBB\xBF") {
+            $text = substr($text, 3);
+        }
+
+        if ($mode === 'preformatted') {
+            return $this->escapeUnicodeCharsForPre($text);
+        } else {
+            $text = $this->removeInvisibleChars($text);
+            $text = preg_replace('/[\x{00A0}\x{202F}]/u', ' ', $text);
+            $text = preg_replace('/\s+/', ' ', $text);
+
+            return trim($text);
+        }
+    }
+
+    /**
+     * Escapes specific Unicode control characters in preformatted text
+     * 
+     * @param string $text Input text to process
+     * @return string
+     */
+    public function escapeUnicodeCharsForPre(string $text): string
+    {
+        $result = '';
+        $length = mb_strlen($text, 'UTF-8');
+
+        for ($i = 0; $i < $length; $i++) {
+            $char = mb_substr($text, $i, 1, 'UTF-8');
+            $codePoint = mb_ord($char, 'UTF-8');
+
+            if (
+                $codePoint >= 0x200B && $codePoint <= 0x200F ||
+                $codePoint >= 0x202A && $codePoint <= 0x202E ||
+                $codePoint == 0x2060
+            ) {
+                $result .= sprintf('\u{%04X}', $codePoint);
+            } else {
+                $result .= $char;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Removes invisible Unicode control characters from input string
+     * 
+     * @param string $input Input string to clean
+     * @return string
+     */
+    public function removeInvisibleChars(string $input): string
+    {
+        $patterns = [
+            '/[\x{200B}-\x{200D}]/u',    // Zero Width Space, Non-Joiner, Joiner
+            '/[\x{2060}]/u',              // Word Joiner
+            '/[\x{200E}\x{200F}]/u',      // Direction marks
+            '/[\x{202A}-\x{202E}]/u',     // Directional embeddings
+        ];
+
+        $text = $input;
+
+        foreach ($patterns as $pattern) {
+            $text = preg_replace($pattern, '', $text);
+        }
+
+        return $text;
+    }
+
+    /**
      * Determine if two text items should be merged
      *
      * @param mixed $current Current item
@@ -366,7 +449,13 @@ class Blockify
             ? escape($text)
             : $text;
 
-        return is_not_empty($text) ? $text : null;
+        $type = 'text';
+
+        if ($model->isPreformatted()) {
+            $type = 'preformatted';
+        }
+
+        return is_not_empty($text) ? $this->normalizeInput($text, $type) : null;
     }
 
     /**

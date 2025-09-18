@@ -147,6 +147,13 @@ class BlockModel implements BlockModelInterface
      */
     protected bool $isRemoveControlCharacters = false;
 
+    /** 
+     * Preformatted block (<pre>)
+     * 
+     * @var bool
+     */
+    protected bool $isPreformatted = false;
+
     private ?ConfigInterface $config = null;
 
     /**
@@ -437,6 +444,29 @@ class BlockModel implements BlockModelInterface
     public function isRemoveControlCharacters(): bool
     {
         return $this->isRemoveControlCharacters;
+    }
+
+    /**
+     * The block will be preformatted.
+     *
+     * @param bool $status Set the value to true to allow preformatting.
+     * @return self
+     */
+    public function setIsPreformatted(bool $status): self
+    {
+        $this->isPreformatted = $status;
+
+        return $this;
+    }
+
+    /**
+     * Check if preformatting is enabled.
+     *
+     * @return bool
+     */
+    public function isPreformatted(): bool
+    {
+        return $this->isPreformatted;
     }
 
     /**

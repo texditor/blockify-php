@@ -184,6 +184,21 @@ interface BlockModelInterface
     public function setIsCustomRenderBlock(bool $status): self;
 
     /**
+     * The block will be preformatted.
+     *
+     * @param bool $status Set the value to true to allow preformatting.
+     * @return self
+     */
+    public function setIsPreformatted(bool $status): self;
+
+    /**
+     * Check if preformatting is enabled.
+     *
+     * @return bool
+     */
+    public function isPreformatted(): bool;
+
+    /**
      * Checks if the block uses a custom rendering method.
      * If true, the processor will call `renderBlock()` on this model instead of using the default renderer.
      *
