@@ -104,7 +104,7 @@ class Blockify
             $text = preg_replace('/[\x{00A0}\x{202F}]/u', ' ', $text);
             $text = preg_replace('/\s+/', ' ', $text);
 
-            return trim($text);
+            return $text;
         }
     }
 
