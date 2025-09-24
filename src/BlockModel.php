@@ -40,7 +40,7 @@ class BlockModel implements BlockModelInterface
      * 
      * @var array 
      */
-    protected array $allowedTags = ['b', 'a', 'i', 'u', 's', 'sub', 'sup'];
+    protected array $allowedTags = ['b', 'a', 'i', 'u', 's', 'sub', 'sup', 'code', 'mark'];
 
     /** List of primary child element types that have special processing 
      * 
