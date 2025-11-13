@@ -134,7 +134,9 @@ class GalleryBlock extends FilesBlock
         $type = $item['type'] ?? '';
         $caption = $item['caption'] ?? '';
         $desc = $item['desc'] ?? '';
-
+        $desc = $this->config()->isRenderEscape() ? escape($desc) : $desc;
+        $caption = $this->config()->isRenderEscape() ? escape($caption) : $caption;
+        
         if (empty($url) || empty($type)) {
             return '';
         }

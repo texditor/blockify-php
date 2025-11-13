@@ -688,7 +688,9 @@ class BlockModel implements BlockModelInterface
 
         foreach ($items as $item) {
             if (is_string($item)) {
-                $result .= $item;
+                $result .= $this->config()->isRenderEscape()
+                    ? escape($item)
+                    : $item;
             } elseif (is_array($item) && isset($item['type'])) {
                 $result .= $this->renderNestedItem($item);
             }

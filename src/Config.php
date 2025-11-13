@@ -43,6 +43,20 @@ class Config implements ConfigInterface
      */
     protected array $renderBlockNames = [];
 
+    /** 
+     * Escaping when receiving data
+     * 
+     * @var bool 
+     */
+    private bool $escape = false;
+
+    /** 
+     * Escaping during rendering
+     * 
+     * @var bool 
+     */
+    private bool $renderEscape = true;
+
     /**
      * Add one or more block models to the configuration
      *
@@ -176,5 +190,51 @@ class Config implements ConfigInterface
     public function getRenderBlockNames(): array
     {
         return $this->renderBlockNames;
+    }
+
+    /**
+     * Escaping when receiving data
+     * 
+     * @param bool $status - Status
+     * @return self
+     */
+    public function setEscape(bool $status = true): self
+    {
+        $this->escape = $status;
+
+        return $this;
+    }
+
+    /**
+     * Data escape status
+     * 
+     * @return bool
+     */
+    public function isEscape(): bool
+    {
+        return $this->escape;
+    }
+
+    /**
+     * Escaping during rendering
+     * 
+     * @param bool $status - Status
+     * @return self
+     */
+    public function setRenderEscape(bool $status = true): self
+    {
+        $this->renderEscape = $status;
+
+        return $this;
+    }
+
+    /**
+     * The status of escaping during rendering
+     * 
+     * @return bool
+     */
+    public function isRenderEscape(): bool
+    {
+        return $this->renderEscape;
     }
 }
