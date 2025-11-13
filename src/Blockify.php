@@ -445,8 +445,12 @@ class Blockify
      */
     protected function processTextItem(string $text, BlockModelInterface $model): ?string
     {
+        $globEscape = $this->config()->isEscape();
         $text = $model->isEscapeText()
-            ? escape($text)
+            ? ($globEscape
+                ? escape($text)
+                : $text
+            )
             : $text;
 
         $type = 'text';

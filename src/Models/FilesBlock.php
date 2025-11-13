@@ -118,14 +118,18 @@ class FilesBlock extends BlockModel
     {
         if (isset($item['caption'])) {
             if (is_not_empty($item['caption']))
-                $item['caption'] = escape(trim($item['caption']));
+                $item['caption'] = $this->config()->isEscape()
+                    ? escape(trim($item['caption']))
+                    : trim($item['caption']);
             else
                 unset($item['caption']);
         }
 
         if (isset($item['desc'])) {
             if (is_not_empty($item['desc']))
-                $item['desc'] = escape(trim($item['desc']));
+                $item['desc'] = $this->config()->isEscape()
+                    ? escape(trim($item['desc']))
+                    : trim($item['desc']);
             else
                 unset($item['desc']);
         }
@@ -190,6 +194,8 @@ class FilesBlock extends BlockModel
             : '.' . $fileExtension;
 
         $desc = $item['desc'] ?? '';
+        $desc = $this->config()->isRenderEscape() ? escape($desc) : $desc;
+        $caption = $this->config()->isRenderEscape() ? escape($caption) : $caption;
         $type = $item['type'] ?? 'application/octet-stream';
         $size = (isset($item['size']) && (
             is_numeric($item['size']) ||

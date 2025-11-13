@@ -92,4 +92,34 @@ interface ConfigInterface
      * @return array Associative array of block name replacements
      */
     public function getRenderBlockNames(): array;
+
+    /**
+     * Escaping when receiving data
+     * 
+     * @param bool $status - Status
+     * @return self
+     */
+    public function setEscape(bool $status = true): self;
+
+    /**
+     * Data escape status
+     * 
+     * @return bool
+     */
+    public function isEscape(): bool;
+
+    /**
+     * Escaping during rendering
+     * 
+     * @param bool $status - Status
+     * @return self
+     */
+    public function setRenderEscape(bool $status = true): self;
+
+    /**
+     * The status of escaping during rendering
+     * 
+     * @return bool
+     */
+    public function isRenderEscape(): bool;
 }
