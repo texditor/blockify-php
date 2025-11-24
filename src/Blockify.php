@@ -26,6 +26,11 @@ class Blockify
     private $config;
 
     /**
+     * @var callable|null
+     */
+    private $filterCallback = null;
+
+    /**
      * Initialize Blockify processor with configuration
      * 
      * @param ConfigInterface $config
@@ -258,7 +263,14 @@ class Blockify
                 );
             }
 
-            $output[$key] = $processedBlock;
+            $callback = $this->filterCallback;
+
+            if ($callback && is_callable($callback)) {
+                if ($callback($model, $block, $key)) {
+                    $output[$key] = $processedBlock;
+                }
+            } else
+                $output[$key] = $processedBlock;
         }
 
         return array_values($output);
@@ -642,6 +654,18 @@ class Blockify
         return $isRequiredInvalid ? null : $verified;
     }
 
+    /**
+     * Block filtering
+     * 
+     * @param callable $filter The function being called
+     * @return self
+     */
+    public function filter(callable $filter): self
+    {
+        $this->filterCallback = $filter;
+
+        return $this;
+    }
 
     public function isValid(): bool
     {
