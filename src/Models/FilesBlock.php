@@ -89,13 +89,13 @@ class FilesBlock extends BlockModel
             };
         }
 
-
         $this->setItemStructure([
             'url' => $urlRule,
             'type' => [
                 'required' => true,
                 'values' => $this->getSourceMimeTypes()
             ],
+            'id' => 'type:integer',
             'size' => 'type:integer',
             'caption' => 'type:string;',
             'desc' => 'type:string;'
