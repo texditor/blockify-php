@@ -1,6 +1,6 @@
 # Blockify
 
-Blockify is a PHP library designed for processing and visualizing structured content, which is presented in the form of `texditror/editror` blocks. It provides validation, sanitization, and output of data in HTML format.
+Blockify is a PHP library designed for processing and visualizing structured content, which is presented in the form of `texditror/editror` (https://github.com/texditor/editor) blocks. It provides validation, sanitization, and output of data in HTML format.
 
 ## Features
 
@@ -39,13 +39,21 @@ $config = (new Config())
         new CodeBlock(),
         (new FilesBlock())
             ->setSourceProtocols(['https', 'http'])
-            ->setSourceProtocols(['https', 'http'])
+            ->setSourceHosts([
+                'priveted.com', 
+                'github.com'
+            ])
             // or only locally
             ->setSourceRegex(["/^\/uploads\/.*\.(png|jpg|jpeg|gif)$/"]),
         (new GalleryBlock())
             // ->setIsMeta(true)
             // ->setIsMetaCaption(true)
             // ->setIsMetaDesc(false)
+            ->setSourceHosts([
+                'youtube.com', 
+                'myimageserver.com'
+            ])
+            ->setSourceProtocols(['https'])
             ->setMetaPosition('top')
             ->setImageTypes(['image/png', 'image/jpeg'])
             ->setVideoTypes(['video/mp4'])
@@ -68,6 +76,35 @@ $config->setDev(true);
 // Process data
 $blockify = (new Blockify($config))
     ->setData($jsonData);
+
+// Or if filters are needed
+$blockify
+    ->filter(function (array $block, int $index, BlockModelInterface $model) {
+        if ($model->isPreformatted())
+            return false;
+
+        if ($block['type'] == 'p') 
+            return false;
+
+        return true;
+    })
+    ->dataFilter(function (
+        array|string $item,
+        int $index,
+        array $block,
+        int $blockIndex,
+        BlockModelInterface $model
+    ) {
+        if (
+            is_array($item) &&
+            $block['type'] == 'gallery' &&
+            empty($item['id'])
+        ) {
+            return false;
+        }
+
+        return true;
+    });
 
 // Get secure and processed data
 $blocks = $blockify->getData();

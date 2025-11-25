@@ -2,8 +2,6 @@
 
 namespace Texditor\Blockify\Interfaces;
 
-use Texditor\Blockify\Config;
-
 interface BlockModelInterface
 {
     /**
