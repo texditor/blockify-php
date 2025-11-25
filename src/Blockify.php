@@ -31,6 +31,11 @@ class Blockify
     private $filterCallback = null;
 
     /**
+     * @var callable|null
+     */
+    private $dataFilterCallback = null;
+
+    /**
      * Initialize Blockify processor with configuration
      * 
      * @param ConfigInterface $config
@@ -254,6 +259,29 @@ class Blockify
                 ? $this->processCustomBlock($block, $model)
                 : $this->processDefaultBlock($block, $model);
 
+            $dataFilterCallback = $this->dataFilterCallback;
+
+            if (
+                $dataFilterCallback &&
+                is_callable($dataFilterCallback) &&
+                !empty($processedBlock['data'])
+            ) {
+                $saveBlock = $processedBlock;
+                $processedBlock['data'] = [];
+
+                foreach ($saveBlock['data'] as $itemIndex => $item) {
+                    if ($dataFilterCallback(
+                        $item,
+                        $itemIndex,
+                        $saveBlock,
+                        $key,
+                        $model
+                    )) {
+                        $processedBlock['data'][] = $item;
+                    }
+                }
+            }
+
             if (empty($processedBlock['data'])) {
                 continue;
             } else {
@@ -266,7 +294,7 @@ class Blockify
             $callback = $this->filterCallback;
 
             if ($callback && is_callable($callback)) {
-                if ($callback($model, $block, $key)) {
+                if ($callback($block, $key, $model)) {
                     $output[$key] = $processedBlock;
                 }
             } else
@@ -490,7 +518,7 @@ class Blockify
         $result = ['type' => $itemData['type']];
 
         if (isset($itemData['attr']) && is_array($itemData['attr'])) {
-            $result['attr'] = $this->filterAttributes($itemData, $model);
+            $result['attr'] = $this->applyAttributeRules($itemData, $model);
 
             if (empty($itemData))
                 $result = null;
@@ -592,13 +620,13 @@ class Blockify
     }
 
     /**
-     * Filter attributes according to model rules
-     * 
-     * @param array &$item Reference to item containing attributes
-     * @param BlockModelInterface $model Model defining rules
-     * @return array Filtered attributes
+     * Filters and validates item attributes using model-defined rules
+     *
+     * @param array $item Reference to item data containing 'attr' and 'type' keys
+     * @param BlockModelInterface $model Model providing attribute validation rules
+     * @return array
      */
-    public function filterAttributes(array &$item, BlockModelInterface $model): array
+    public function applyAttributeRules(array &$item, BlockModelInterface $model): array
     {
         $validated = $this->filterDataWithRules(
             $item['attr'],
@@ -611,6 +639,19 @@ class Blockify
         }
 
         return $validated ?? [];
+    }
+
+    /**
+     * Filter of data elements.
+     * 
+     * @param callable $filter The function being called
+     * @return self
+     */
+    public function dataFilter(callable $filter): self
+    {
+        $this->dataFilterCallback = $filter;
+
+        return $this;
     }
 
     /**
@@ -667,11 +708,21 @@ class Blockify
         return $this;
     }
 
+    /**
+     * If the structor does not contain errors
+     * 
+     * @return bool
+     */
     public function isValid(): bool
     {
         return empty($this->errors);
     }
 
+    /**
+     * Get all validation errors
+     * 
+     * @return array
+     */
     public function getErrors(): array
     {
         return $this->errors;
