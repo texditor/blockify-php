@@ -46,7 +46,7 @@ class BlockModel implements BlockModelInterface
      * 
      * @var array 
      */
-    protected array $primaryChilds = [];
+    protected array $primaryChildren = [];
 
     /** 
      * Whether this block uses a non-standard structure definition
@@ -76,7 +76,6 @@ class BlockModel implements BlockModelInterface
      */
     protected array $sourceProtocols = ['https', 'http', 'ftp'];
 
-
     /**
      * Regular expressions of the source
      * 
@@ -85,7 +84,7 @@ class BlockModel implements BlockModelInterface
     protected array $sourceRegex = [];
 
     /** 
-     * Allowed hostnames for external resources (empty allows all)
+     * Allowed host names for external resources (empty allows all)
      * 
      * @var array */
     protected array $sourceHosts = [];
@@ -128,9 +127,14 @@ class BlockModel implements BlockModelInterface
      * @var array 
      */
     protected array $blockStructure = [
-        'type' => 'required',
-        'data' => 'type:array;required',
-        'attr' => 'type:array'
+        'type' => [
+            'type' => 'string',
+            'required' => true
+        ],
+        'data' => [
+            'type' => 'array',
+            'required' => true
+        ]
     ];
 
     /**
@@ -245,9 +249,9 @@ class BlockModel implements BlockModelInterface
      * @param array $tags Array of primary child tag names
      * @return self
      */
-    public function setPrimaryChilds(array $tags): self
+    public function setPrimaryChildren(array $tags): self
     {
-        $this->primaryChilds = $tags;
+        $this->primaryChildren = $tags;
 
         return $this;
     }
@@ -257,9 +261,9 @@ class BlockModel implements BlockModelInterface
      *
      * @return array
      */
-    public function getPrimaryChilds(): array
+    public function getPrimaryChildren(): array
     {
-        return $this->primaryChilds;
+        return $this->primaryChildren;
     }
 
     /**
@@ -329,6 +333,69 @@ class BlockModel implements BlockModelInterface
     public function getBlockStructure(): array
     {
         return $this->blockStructure;
+    }
+
+    /**
+     * Clear existing block attributes and set new ones.
+     * Only allows fields that are not 'type' or 'data'.
+     *
+     * @param array<string, array> $attributes Associative array of attribute configs
+     * @return self
+     */
+    public function setBlockAttributes(array $attributes): self
+    {
+        foreach ($this->blockStructure as $key => $value) {
+            if ($key !== 'type' && $key !== 'data') {
+                unset($this->blockStructure[$key]);
+            }
+        }
+
+        foreach ($attributes as $name => $config) {
+            $this->addBlockAttribute($name, $config);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Add a field that will be treated as a block attribute.
+     *
+     * @param string $name Attribute name
+     * @param array $config Field configuration (type, validation, etc.)
+     * @return self
+     */
+    public function addBlockAttribute(string $name, array $config = []): self
+    {
+        if (
+            empty($this->blockStructure[$name]) &&
+            $name !== 'type' &&
+            $name !== 'data'
+        ) {
+            $this->blockStructure[$name] = $config;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Get all block attributes including 'type' and 'data'.
+     *
+     * @return array<string, array> Associative array of all fields and their configs
+     */
+    public function getBlockAttributes(): array
+    {
+        return $this->blockStructure;
+    }
+
+    /**
+     * Get a single block attribute by name, including 'type' and 'data'.
+     *
+     * @param string $name Attribute name
+     * @return array|null Attribute config or null if not found
+     */
+    public function getBlockAttribute(string $name): ?array
+    {
+        return $this->blockStructure[$name] ?? null;
     }
 
     /**
@@ -447,9 +514,9 @@ class BlockModel implements BlockModelInterface
     }
 
     /**
-     * The block will be preformatted.
+     * Set whether the block is preformatted
      *
-     * @param bool $status Set the value to true to allow preformatting.
+     * @param bool $status True to enable preformatted mode
      * @return self
      */
     public function setIsPreformatted(bool $status): self
@@ -458,9 +525,9 @@ class BlockModel implements BlockModelInterface
 
         return $this;
     }
-
+    
     /**
-     * Check if preformatting is enabled.
+     * Check if preformatted mode is enabled
      *
      * @return bool
      */
@@ -516,7 +583,7 @@ class BlockModel implements BlockModelInterface
     /**
      * Set source regular expressions
      *
-     * @param array $protocols List of regular expressions
+     * @param array $regex List of regular expressions
      * @return self
      */
     public function setSourceRegex(array $regex = []): self
@@ -660,7 +727,19 @@ class BlockModel implements BlockModelInterface
             : $tagName;
 
         $items = $this->renderItems($block['data'] ?? []);
-        $attrs = $this->renderAttributes($block['attr'] ?? []);
+        $htmlBlockAttributes = [];
+
+        foreach ($block as $attrKey => $attribute) {
+            if ($attrKey !== 'type' && $attrKey !== 'data') {
+                $attributeConfig = $this->getBlockAttribute($attrKey);
+
+                if (!empty($attributeConfig) && is_string($attribute)) {
+                    $htmlBlockAttributes[$attrKey] = $attribute;
+                }
+            }
+        }
+
+        $attrs = $this->renderAttributes($htmlBlockAttributes);
 
         return $this->renderTags($tagName, $items, $attrs);
     }

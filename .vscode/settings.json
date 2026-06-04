@@ -1,0 +1,17 @@
+{
+    "cSpell.customDictionaries": {
+        "custom-dictionary-workspace": {
+            "name": "custom-dictionary-workspace",
+            "path": "${workspaceFolder:blockify-php}/.cspell/custom-dictionary-workspace.txt",
+            "addWords": true,
+            "scope": "workspace"
+        }
+    },
+    "cSpell.words": [
+        "Blockify",
+        "Cleup",
+        "Eduard",
+        "msvideo",
+        "quicktime"
+    ]
+}

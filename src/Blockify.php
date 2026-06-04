@@ -6,10 +6,11 @@ use Cleup\Guard\Purifier\Utils\Valid;
 use Cleup\Guard\Purifier\Validation;
 use Cleup\Helpers\Arr;
 use Texditor\Blockify\Exceptions\InvalidJsonDataException;
+use Texditor\Blockify\Interfaces\BlockifyInterface;
 use Texditor\Blockify\Interfaces\BlockModelInterface;
 use Texditor\Blockify\Interfaces\ConfigInterface;
 
-class Blockify
+class Blockify implements BlockifyInterface
 {
     /**
      * @var array
@@ -63,12 +64,20 @@ class Blockify
      */
     protected function isValidBlock($item): bool
     {
-        return isset($item['type']) &&
-            is_string($item['type']) &&
-            $this->config()->getModel($item['type']) !== null &&
-            !empty($item['data']) &&
-            is_array($item['data']) &&
-            Arr::isList($item['data']);
+        if (
+            !(
+                isset($item['type']) &&
+                is_string($item['type']) &&
+                $this->config()->getModel($item['type']) !== null &&
+                !empty($item['data']) &&
+                is_array($item['data']) &&
+                Arr::isList($item['data'])
+            )
+        ) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -201,7 +210,7 @@ class Blockify
             && $next['type'] === $current['type']
             && empty($current['attr'])
             && empty($next['attr'])
-            && empty($model->getPrimaryChilds());
+            && empty($model->getPrimaryChildren());
     }
 
     /**
@@ -214,19 +223,39 @@ class Blockify
     {
         $output = [];
 
-        foreach ($rawData as $item) {
-            if ($this->isValidBlock($item)) {
-                $model = $this->config()->getModel($item['type']);
+        foreach ($rawData as $blockIndex => $block) {
+
+            if ($this->isValidBlock($block)) {
+                $model = $this->config()->getModel($block['type']);
                 $structureKeys = array_keys($model->getBlockStructure());
+                $block = $this->filterDataWithRules($block, $model->getBlockStructure());
 
                 // Keep only keys that exist in block structure
-                foreach ($item as $itemKey => $itemValue) {
-                    if (!in_array($itemKey, $structureKeys)) {
-                        unset($item[$itemKey]);
+                foreach ($block as $blockKey => $blockValue) {
+                    if (!in_array($blockKey, $structureKeys)) {
+                        unset($block[$blockKey]);
                     }
                 }
 
-                $output[] = $item;
+                $output[] = $block;
+            } else {
+                if (empty($block['type'])) {
+                    $this->addError('type', [
+                        'code' => 'type_required',
+                        'message' => 'The type field is required',
+                        'data' => $block,
+                        'index' =>  $blockIndex
+                    ]);
+                }
+
+                if (empty($block['data'])) {
+                    $this->addError('data', [
+                        'code' => 'data_required',
+                        'message' => 'The data field is required',
+                        'data' => $block,
+                        'index' =>  $blockIndex
+                    ]);
+                }
             }
         }
 
@@ -317,9 +346,9 @@ class Blockify
         $outputItem['data'] = [];
 
         foreach ($block['data'] as $itemData) {
-            $primaryChilds = $model->getPrimaryChilds();
+            $primaryChildren = $model->getPrimaryChildren();
 
-            if (!empty($primaryChilds)) {
+            if (!empty($primaryChildren)) {
                 $this->processPrimaryChild($itemData, $model, $outputItem);
             } else {
                 $this->processRegularItem($itemData, $model, $outputItem);
@@ -332,9 +361,10 @@ class Blockify
     /**
      * Process a primary child item according to model rules.
      *
-     * @param mixed $itemData The item data to process
+     * @param mixed $item The item data to process
      * @param BlockModelInterface $model The model defining processing rules
-     * @param array
+     * @param array &$output Reference to the output array to store results
+     * @return void
      */
     protected function processPrimaryChild($item, BlockModelInterface $model, array &$output): void
     {
@@ -375,7 +405,7 @@ class Blockify
             is_string($itemData['type']) &&
             in_array(
                 $itemData['type'],
-                $model->getPrimaryChilds()
+                $model->getPrimaryChildren()
             );
     }
 
@@ -432,6 +462,13 @@ class Blockify
         return $preparedBlock;
     }
 
+    /**
+     * Process item data by type — delegates to text or array handler
+     *
+     * @param array|string $itemData
+     * @param BlockModelInterface $model
+     * @return array|string|null
+     */
     protected function processItemData(array|string $itemData, BlockModelInterface $model): array|string|null
     {
         return is_string($itemData)
@@ -709,7 +746,7 @@ class Blockify
     }
 
     /**
-     * If the structor does not contain errors
+     * If the structure does not contain errors
      * 
      * @return bool
      */
@@ -726,5 +763,21 @@ class Blockify
     public function getErrors(): array
     {
         return $this->errors;
+    }
+
+    /**
+     * Add an error grouped by error code.
+     *
+     * @param string $code Error code identifier
+     * @param array $data Additional error context
+     * @return void
+     */
+    public function addError(string $code, array $data = []): void
+    {
+        if (empty($this->errors[$code])) {
+            $this->errors[$code] = [];
+        }
+
+        $this->errors[$code][] = $data;
     }
 }

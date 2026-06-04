@@ -62,13 +62,46 @@ interface BlockModelInterface
 
     /**
      * Gets the validation rules for the overall block structure.
-     * Defines the required and optional keys for a block of this type (e.g., 'type', 'data', 'attr').
+     * Defines the required and optional keys for a block of this type (e.g., 'type', 'data').
      * Used by the `filterDataWithRules` method in Blockify.
      *
      * @return array
-     * @example ['type' => 'required', 'data' => 'type:array;required', 'attr' => 'type:array']
+     * @example ['type' => 'required', 'data' => 'type:array;required']
      */
     public function getBlockStructure(): array;
+
+    /**
+     * Clear existing block attributes and set new ones.
+     * Only allows fields that are not 'type' or 'data'.
+     *
+     * @param array<string, array> $attributes Associative array of attribute configs
+     * @return self
+     */
+    public function setBlockAttributes(array $attributes): self;
+
+    /**
+     * Add a field that will be treated as a block attribute.
+     *
+     * @param string $name Attribute name
+     * @param array $config Field configuration (type, validation, etc.)
+     * @return self
+     */
+    public function addBlockAttribute(string $name, array $config = []): self;
+
+    /**
+     * Get all block attributes including 'type' and 'data'.
+     *
+     * @return array<string, array> Associative array of all fields and their configs
+     */
+    public function getBlockAttributes(): array;
+
+    /**
+     * Get a single block attribute by name, including 'type' and 'data'.
+     *
+     * @param string $name Attribute name
+     * @return array|null Attribute config or null if not found
+     */
+    public function getBlockAttribute(string $name): ?array;
 
     /**
      * Sets the validation rules for individual content items within the block's 'data' array.
@@ -182,15 +215,15 @@ interface BlockModelInterface
     public function setIsCustomRenderBlock(bool $status): self;
 
     /**
-     * The block will be preformatted.
+     * Set whether the block is preformatted
      *
-     * @param bool $status Set the value to true to allow preformatting.
+     * @param bool $status True to enable preformatted mode
      * @return self
      */
     public function setIsPreformatted(bool $status): self;
 
     /**
-     * Check if preformatting is enabled.
+     * Check if preformatted mode is enabled
      *
      * @return bool
      */
@@ -203,10 +236,6 @@ interface BlockModelInterface
      * @return bool
      */
     public function isCustomRenderBlock(): bool;
-
-    /*****************************************************************
-     * CONTENT DEFINITION
-     ****************************************************************/
 
     /**
      * Sets the list of allowed HTML tags within this block's content.
@@ -233,7 +262,7 @@ interface BlockModelInterface
      * @param array $tags
      * @return self
      */
-    public function setPrimaryChilds(array $tags): self;
+    public function setPrimaryChildren(array $tags): self;
 
     /**
      * Gets the list of primary child element types that require special processing.
@@ -241,11 +270,7 @@ interface BlockModelInterface
      *
      * @return array
      */
-    public function getPrimaryChilds(): array;
-
-    /*****************************************************************
-     * EXTERNAL RESOURCE VALIDATION (For links, media, etc.)
-     ****************************************************************/
+    public function getPrimaryChildren(): array;
 
     /**
      * Sets the list of allowed URL protocols for external resources.
@@ -264,7 +289,7 @@ interface BlockModelInterface
     public function getSourceProtocols(): array;
 
     /**
-     * Sets the list of allowed hostnames for external resources.
+     * Sets the list of allowed host names for external resources.
      *
      * @param array $hosts
      * @return self
@@ -272,7 +297,7 @@ interface BlockModelInterface
     public function setSourceHosts(array $hosts): self;
 
     /**
-     * Gets the list of allowed hostnames for external resources.
+     * Gets the list of allowed host names for external resources.
      * If empty, all hosts are allowed (subject to protocol rules).
      *
      * @return array
@@ -338,7 +363,7 @@ interface BlockModelInterface
      * Renders the entire block to its HTML representation.
      * This method is called if `isCustomRenderBlock()` returns true.
      *
-     * @param array $block The processed block data (with 'type', 'data', and optionally 'attr').
+     * @param array $block Processed block data (with 'type', 'data' and optional attributes)
      * @return string The rendered HTML string.
      */
     public function renderBlock(array $block): string;
