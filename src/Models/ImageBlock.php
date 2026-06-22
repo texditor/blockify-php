@@ -2,13 +2,9 @@
 
 namespace Texditor\Blockify\Models;
 
-/**
- * @deprecated since version 2.1.0
- */
-class GalleryBlock extends FilesBlock
+class ImageBlock extends FileBlock
 {
-    protected string $inputName = 'gallery';
-    protected bool $isLinkStrategy = true;
+    protected string $inputName = 'image';
 
     /** 
      * Screen width breakpoint for thumbnail switching (in pixels)
@@ -22,30 +18,12 @@ class GalleryBlock extends FilesBlock
      * 
      * @var array  
      */
-    private array $imageTypes = [
+    protected array $sourceMimeTypes = [
         'image/png',
         'image/jpeg',
         'image/gif',
         'image/webp',
     ];
-
-    /** 
-     * Allowed video MIME types 
-     * 
-     * @var array 
-     */
-    private array $videoTypes = [
-        'video/mp4',
-        'video/webm',
-        'video/ogg',
-    ];
-
-    /**
-     * Video attributes
-     * 
-     * @var array
-     */
-    private array $videoAttributes = [];
 
     /**
      * The position of the meta section (only render).
@@ -80,13 +58,6 @@ class GalleryBlock extends FilesBlock
      */
     protected function onCreatedFilesStructure(): void
     {
-        $this->setSourceMimeTypes(
-            array_merge(
-                $this->getImageTypes(),
-                $this->getVideoTypes()
-            )
-        );
-
         $structure = $this->getBlockStructure();
         $structure['style'] = [
             'type' => 'string',
@@ -98,21 +69,23 @@ class GalleryBlock extends FilesBlock
         $allowedHosts = $this->getSourceHosts();
         $itemStructure = $this->getItemStructure();
 
-        $itemStructure['thumbnail'] = [
-            'type' => 'string',
-            'url' => true,
-        ];
+        if ($this->isLinkStrategy()) {
+            $itemStructure['thumbnail'] = [
+                'type' => 'string',
+                'url' => true,
+            ];
 
-        if (!empty($allowedHosts))
-            $itemStructure['thumbnail']['allowedHost'] = $allowedHosts;
+            if (!empty($allowedHosts))
+                $itemStructure['thumbnail']['allowedHost'] = $allowedHosts;
+        }
 
         $this->setItemStructure($itemStructure);
     }
 
     /**
-     * Render gallery block with style-specific classes
+     * Render image block with style-specific classes
      *
-     * @param array $block Gallery block data
+     * @param array $block Image block data
      * @param string $additionalCss Additional CSS classes
      * @return string
      */
@@ -127,7 +100,7 @@ class GalleryBlock extends FilesBlock
     }
 
     /**
-     * Render single gallery item
+     * Render single image item
      *
      * @param array $item Item data containing url and type
      * @return string
@@ -145,7 +118,6 @@ class GalleryBlock extends FilesBlock
             return '';
         }
 
-        $isImage = in_array($type, $this->getImageTypes());
         $cssStyle = $this->getCssName() . '-item';
         $ccsType = $this->getCssName() . '-type-' . str_replace('/', '-', $type);
         $meta = '';
@@ -163,28 +135,19 @@ class GalleryBlock extends FilesBlock
         }
 
         $html = '<div class="' . $cssStyle . ' ' . $ccsType . '">';
-
-        if ($isImage)
-            $html .= '<a href="' . $url . '" class="' . $cssStyle . '-link">';
+        $html .= '<a href="' . $url . '" class="' . $cssStyle . '-link">';
 
         if ($this->getMetaPosition() === 'top')
             $html .= $meta;
 
         $html .= '<div class="' . $cssStyle . '-source">';
-
-        if ($isImage) {
-            $html .= $this->renderImage($item);
-        } else {
-            $html .= $this->renderVideo($item);
-        }
-
+        $html .= $this->renderImage($item);
         $html .= '</div>';
 
         if ($this->getMetaPosition() === 'bottom')
             $html .= $meta;
 
-        if ($isImage)
-            $html .= '</a>';
+        $html .= '</a>';
 
         $html .= '</div>';
 
@@ -215,75 +178,6 @@ class GalleryBlock extends FilesBlock
     }
 
     /**
-     * Render video item
-     *
-     * @param array $item Video data
-     * @return string
-     */
-    protected function renderVideo(array $item): string
-    {
-        $cssStyle = $this->getCssName();
-        $attributes = $this->getVideoAttributes();
-        $attrString = '';
-
-        foreach ($attributes as $key  => $attribute) {
-            $attrString .= sprintf(' %s="%s"', $key, $attribute);
-        }
-
-        $picture = '<video class="' . $cssStyle . '-item-video"' . $attrString . '>';
-        $picture .= '<source src="' . $item['url'] . '" type="' . $item['type'] . '" />';
-        $picture .= '</video>';
-
-        return $picture;
-    }
-
-    /**
-     * Set allowed image MIME types
-     *
-     * @param array $types Array of image MIME types
-     * @return self
-     */
-    public function setImageTypes(array $types): self
-    {
-        $this->imageTypes = $types;
-
-        return $this;
-    }
-
-    /**
-     * Get allowed image MIME types
-     *
-     * @return array
-     */
-    public function getImageTypes(): array
-    {
-        return $this->imageTypes;
-    }
-
-    /**
-     * Set allowed video MIME types
-     *
-     * @param array $types Array of video MIME types
-     * @return self
-     */
-    public function setVideoTypes(array $types): self
-    {
-        $this->videoTypes = $types;
-
-        return $this;
-    }
-
-    /**
-     * Get allowed video MIME types
-     *
-     * @return array
-     */
-    public function getVideoTypes(): array
-    {
-        return $this->videoTypes;
-    }
-
-    /**
      * Set screen size threshold for thumbnail switching
      *
      * @param int $size Breakpoint width in pixels
@@ -304,29 +198,6 @@ class GalleryBlock extends FilesBlock
     public function getThumbnailBreakpoint(): int
     {
         return $this->thumbnailBreakpoint;
-    }
-
-    /**
-     * Set HTML attributes for videos
-     *
-     * @param array $attributes Attributes
-     * @return self
-     */
-    public function setVideoAttributes(array $attributes): self
-    {
-        $this->videoAttributes = $attributes;
-
-        return $this;
-    }
-
-    /**
-     * Get HTML attributes of a video
-     *
-     * @return array
-     */
-    public function getVideoAttributes(): array
-    {
-        return $this->videoAttributes;
     }
 
     /**

@@ -321,6 +321,25 @@ class Blockify implements BlockifyInterface
             }
 
             $callback = $this->filterCallback;
+            $transformItemCallback = $model->getTransformItemCallback();
+
+            if (
+                $transformItemCallback &&
+                is_callable($transformItemCallback) &&
+                !empty($processedBlock['data']) &&
+                is_array($processedBlock['data'])
+            ) {
+                foreach ($processedBlock['data'] as $itemKey => $item) {
+                    $preparedItem = $transformItemCallback(
+                        $item,
+                        $itemKey,
+                        $model
+                    );
+
+                    if (!empty($preparedItem))
+                        $processedBlock['data'][$itemKey] = $preparedItem;
+                }
+            }
 
             if ($callback && is_callable($callback)) {
                 if ($callback($block, $key, $model)) {

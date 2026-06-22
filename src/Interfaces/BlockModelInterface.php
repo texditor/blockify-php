@@ -120,6 +120,21 @@ interface BlockModelInterface
     public function getItemStructure(): array;
 
     /**
+     * Get the callback used to transform each block item
+     *
+     * @return callable|null
+     */
+    public function getTransformItemCallback(): ?callable;
+
+    /**
+     * Set a callback to transform each block item
+     *
+     * @param callable $callback
+     * @return self
+     */
+    public function transformItem(callable $callback): self;
+
+    /**
      * Gets the attribute validation rules for a specific HTML tag.
      * Used to validate and filter attributes like 'href' for 'a' tags.
      *

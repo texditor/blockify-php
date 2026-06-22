@@ -25,8 +25,8 @@ use Texditor\Blockify\Blockify;
 use Texditor\Blockify\Config;
 use Texditor\Blockify\Models\ParagraphBlock;
 use Texditor\Blockify\Models\CodeBlock;
-use Texditor\Blockify\Models\FilesBlock;
-use Texditor\Blockify\Models\GalleryBlock;
+use Texditor\Blockify\Models\FileBlock;
+use Texditor\Blockify\Models\ImageBlock;
 use Texditor\Blockify\Models\HeaderBlock;
 use Texditor\Blockify\Models\OrderedListBlock;
 use Texditor\Blockify\Models\UnorderedListBlock;
@@ -37,20 +37,25 @@ $config = (new Config())
         (new ParagraphBlock())
           ->setAllowedTags(['a', 'b']),
         new CodeBlock(),
-        (new FilesBlock())
+        (new FileBlock())
             ->setSourceProtocols(['https', 'http'])
+            ->transformItem(function ($item) {
+                $item['hello'] = 'world';
+                return $item;
+            }),
             ->setSourceHosts([
                 'priveted.com', 
                 'github.com'
             ])
             // or only locally
             ->setSourceRegex(["/^\/uploads\/.*\.(png|jpg|jpeg|gif)$/"]),
-        (new GalleryBlock())
+        (new ImageBlock())
+            ->setIsLinkStrategy(true) // the old strategy, use IDs
             // ->setIsMeta(true)
             // ->setIsMetaCaption(true)
             // ->setIsMetaDesc(false)
             ->setSourceHosts([
-                'youtube.com', 
+                'priveted.com', 
                 'myimageserver.com'
             ])
             ->setSourceProtocols(['https'])
@@ -61,6 +66,7 @@ $config = (new Config())
                 'controls' => 'true'
             ]),
 
+        new VideoBlock(),
         new UnorderedListBlock(),
         new OrderedListBlock(),
         // Default h1
