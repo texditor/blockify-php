@@ -53,7 +53,7 @@ class HtmlBuilder implements HtmlBuilderInterface
                 }
             }
         }
-
+        
         return $html;
     }
 

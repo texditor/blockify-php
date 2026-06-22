@@ -110,6 +110,13 @@ class BlockModel implements BlockModelInterface
     protected array $itemStructure = [];
 
     /**
+     * Callback to transform each block item
+     *
+     * @var callable|null
+     */
+    protected $transformItemCallback = null;
+
+    /**
      * Rules for checking attributes for each tag
      * 
      *  @var array 
@@ -422,6 +429,29 @@ class BlockModel implements BlockModelInterface
     }
 
     /**
+     * Get the callback used to transform each block item
+     *
+     * @return callable|null
+     */
+    public function getTransformItemCallback(): ?callable
+    {
+        return $this->transformItemCallback;
+    }
+
+    /**
+     * Set a callback to transform each block item
+     *
+     * @param callable $callback
+     * @return self
+     */
+    public function transformItem(callable $callback): self
+    {
+        $this->transformItemCallback = $callback;
+
+        return $this;
+    }
+
+    /**
      * Set whether similar items should be merged
      *
      * @param bool $status True to enable merging
@@ -525,7 +555,7 @@ class BlockModel implements BlockModelInterface
 
         return $this;
     }
-    
+
     /**
      * Check if preformatted mode is enabled
      *

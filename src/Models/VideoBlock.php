@@ -2,42 +2,22 @@
 
 namespace Texditor\Blockify\Models;
 
-/**
- * @deprecated since version 2.1.0
- */
-class GalleryBlock extends FilesBlock
+class VideoBlock extends FileBlock
 {
-    protected string $inputName = 'gallery';
-    protected bool $isLinkStrategy = true;
-
-    /** 
-     * Screen width breakpoint for thumbnail switching (in pixels)
-     * 
-     * @var int  
-     */
-    private int $thumbnailBreakpoint = 768;
+    protected string $inputName = 'video';
 
     /** 
      * Allowed image MIME types
      * 
      * @var array  
      */
-    private array $imageTypes = [
-        'image/png',
-        'image/jpeg',
-        'image/gif',
-        'image/webp',
-    ];
-
-    /** 
-     * Allowed video MIME types 
-     * 
-     * @var array 
-     */
-    private array $videoTypes = [
+    protected array $sourceMimeTypes = [
         'video/mp4',
         'video/webm',
         'video/ogg',
+        'video/mpeg',
+        'video/quicktime',
+        'video/x-msvideo'
     ];
 
     /**
@@ -80,50 +60,20 @@ class GalleryBlock extends FilesBlock
      */
     protected function onCreatedFilesStructure(): void
     {
-        $this->setSourceMimeTypes(
-            array_merge(
-                $this->getImageTypes(),
-                $this->getVideoTypes()
-            )
-        );
-
-        $structure = $this->getBlockStructure();
-        $structure['style'] = [
-            'type' => 'string',
-            'values' => ['grid', 'slider', 'single'],
-        ];
-
-        $this->setBlockStructure($structure);
-
-        $allowedHosts = $this->getSourceHosts();
         $itemStructure = $this->getItemStructure();
 
-        $itemStructure['thumbnail'] = [
-            'type' => 'string',
-            'url' => true,
-        ];
+        if ($this->isLinkStrategy()) {
+            $allowedHosts = $this->getSourceHosts();
+            $itemStructure['poster'] = [
+                'type' => 'string',
+                'url' => true,
+            ];
 
-        if (!empty($allowedHosts))
-            $itemStructure['thumbnail']['allowedHost'] = $allowedHosts;
+            if (!empty($allowedHosts))
+                $itemStructure['poster']['allowedHost'] = $allowedHosts;
+        }
 
         $this->setItemStructure($itemStructure);
-    }
-
-    /**
-     * Render gallery block with style-specific classes
-     *
-     * @param array $block Gallery block data
-     * @param string $additionalCss Additional CSS classes
-     * @return string
-     */
-    protected function renderFiles(array $block, string $additionalCss = ''): string
-    {
-        $itemsStyle = $block['style'] ?? '';
-
-        if (!empty($itemsStyle))
-            $itemsStyle = $this->getCssName() . '-' . $itemsStyle;
-
-        return parent::renderFiles($block, $itemsStyle);
     }
 
     /**
@@ -145,7 +95,6 @@ class GalleryBlock extends FilesBlock
             return '';
         }
 
-        $isImage = in_array($type, $this->getImageTypes());
         $cssStyle = $this->getCssName() . '-item';
         $ccsType = $this->getCssName() . '-type-' . str_replace('/', '-', $type);
         $meta = '';
@@ -163,55 +112,23 @@ class GalleryBlock extends FilesBlock
         }
 
         $html = '<div class="' . $cssStyle . ' ' . $ccsType . '">';
-
-        if ($isImage)
-            $html .= '<a href="' . $url . '" class="' . $cssStyle . '-link">';
+        $html .= '<a href="' . $url . '" class="' . $cssStyle . '-link">';
 
         if ($this->getMetaPosition() === 'top')
             $html .= $meta;
 
         $html .= '<div class="' . $cssStyle . '-source">';
-
-        if ($isImage) {
-            $html .= $this->renderImage($item);
-        } else {
-            $html .= $this->renderVideo($item);
-        }
-
+        $html .= $this->renderVideo($item);
         $html .= '</div>';
 
         if ($this->getMetaPosition() === 'bottom')
             $html .= $meta;
 
-        if ($isImage)
-            $html .= '</a>';
+        $html .= '</a>';
 
         $html .= '</div>';
 
         return $html;
-    }
-
-    /**
-     * Render image item with responsive thumbnail support
-     *
-     * @param array $item Image data including url and optional thumbnail
-     * @return string
-     */
-    protected function renderImage(array $item): string
-    {
-        $cssStyle = $this->getCssName();
-        $picture = '<picture class="' . $cssStyle . '-item-picture">';
-
-        if (isset($item['thumbnail'])) {
-            $picture .= '<source srcset="' . $item['url'] . '" media="(min-width: ' . $this->getThumbnailBreakpoint() . 'px)" />';
-            $picture .= '<img class="' . $cssStyle . '-item-picture-image" src="' . $item['thumbnail'] . '" alt="' . ($item['caption'] ?? '') . '" />';
-        } else {
-            $picture .= '<img class="' . $cssStyle . '-item-picture-image" src="' . $item['url'] . '" alt="' . ($item['caption'] ?? '') . '" />';
-        }
-
-        $picture .= '</picture>';
-
-        return $picture;
     }
 
     /**
@@ -225,6 +142,10 @@ class GalleryBlock extends FilesBlock
         $cssStyle = $this->getCssName();
         $attributes = $this->getVideoAttributes();
         $attrString = '';
+        $poster = $item['poster'] ?? '';
+
+        if (!empty($poster))
+            $attributes['poster'] = $poster;
 
         foreach ($attributes as $key  => $attribute) {
             $attrString .= sprintf(' %s="%s"', $key, $attribute);
@@ -235,75 +156,6 @@ class GalleryBlock extends FilesBlock
         $picture .= '</video>';
 
         return $picture;
-    }
-
-    /**
-     * Set allowed image MIME types
-     *
-     * @param array $types Array of image MIME types
-     * @return self
-     */
-    public function setImageTypes(array $types): self
-    {
-        $this->imageTypes = $types;
-
-        return $this;
-    }
-
-    /**
-     * Get allowed image MIME types
-     *
-     * @return array
-     */
-    public function getImageTypes(): array
-    {
-        return $this->imageTypes;
-    }
-
-    /**
-     * Set allowed video MIME types
-     *
-     * @param array $types Array of video MIME types
-     * @return self
-     */
-    public function setVideoTypes(array $types): self
-    {
-        $this->videoTypes = $types;
-
-        return $this;
-    }
-
-    /**
-     * Get allowed video MIME types
-     *
-     * @return array
-     */
-    public function getVideoTypes(): array
-    {
-        return $this->videoTypes;
-    }
-
-    /**
-     * Set screen size threshold for thumbnail switching
-     *
-     * @param int $size Breakpoint width in pixels
-     * @return self
-     */
-    public function setThumbnailBreakpoint(int $size): self
-    {
-        $this->thumbnailBreakpoint = $size;
-
-        return $this;
-    }
-
-    /**
-     * Get current thumbnail screen size threshold
-     *
-     * @return int
-     */
-    public function getThumbnailBreakpoint(): int
-    {
-        return $this->thumbnailBreakpoint;
     }
 
     /**
