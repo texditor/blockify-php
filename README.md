@@ -157,8 +157,11 @@ The library includes these default block models:
 
 - `ParagraphBlock` - For text paragraphs
 - `CodeBlock` - For code snippets
-- `FilesBlock` - For file attachments
-- `GalleryBlock` - For image/video galleries
+- `FileBlock` - For file attachments
+- `ImageBlock` - For image attachments
+- `VideoBlock` - For video attachments
+- `FilesBlock (deprecated)` - For file attachments
+- `GalleryBlock (deprecated)` - For image/video galleries
 - `HeaderBlock` - For headings (h1-h6)
 - `OrderedListBlock` - For numbered lists
 - `UnorderedListBlock` - For bulleted lists
