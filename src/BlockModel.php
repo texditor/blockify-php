@@ -123,8 +123,15 @@ class BlockModel implements BlockModelInterface
      */
     protected array $tagAttributeRules = [
         'a' => [
-            'href' => 'required;url;allowedProtocol:https|http|ftp',
-            'target' => 'values:_blank'
+            'href' => [
+                'type' => 'string',
+                'required' => true,
+                'allowedProtocol' => [['https', 'http', 'ftp']]
+            ],
+            'target' => [
+                'type' => 'string',
+                'values' => ['_blank']
+            ]
         ]
     ];
 
