@@ -547,7 +547,7 @@ class Blockify implements BlockifyInterface
     protected function processTextItem(string $text, BlockModelInterface $model): ?string
     {
         $globEscape = $this->config()->isEscape();
-        
+
         $itemDataFilterCallback = $this->itemDataFilterCallback;
 
         if (
@@ -775,7 +775,6 @@ class Blockify implements BlockifyInterface
 
         foreach ($errors as $name => $errorList) {
             foreach ($errorList as $error) {
-
                 $rule = $validator->normalizeRule($rules[$name] ?? []);
 
                 if (empty($this->errors[$name]))
