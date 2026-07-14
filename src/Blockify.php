@@ -554,8 +554,12 @@ class Blockify implements BlockifyInterface
         if ($model->isPreformatted()) {
             $type = 'preformatted';
         }
+        
+        if (is_not_empty($text) || preg_match('/^\s+$/', $text)) {
+            return $this->normalizeInput($text, $type);
+        }
 
-        return is_not_empty($text) ? $this->normalizeInput($text, $type) : null;
+        return null;
     }
 
     /**
