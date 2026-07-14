@@ -78,6 +78,14 @@ interface BlockifyInterface
     public function dataFilter(callable $filter): self;
 
     /**
+     * Filter of individual data items within each element.
+     * 
+     * @param callable $filter The function being called
+     * @return self
+     */
+    public function itemDataFilter(callable $filter): self;
+
+    /**
      * Filter data according to validation rules
      *
      * @param array $data
