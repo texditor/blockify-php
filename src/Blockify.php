@@ -37,6 +37,11 @@ class Blockify implements BlockifyInterface
     private $dataFilterCallback = null;
 
     /**
+     * @var callable|null
+     */
+    private $itemDataFilterCallback = null;
+
+    /**
      * Initialize Blockify processor with configuration
      * 
      * @param ConfigInterface $config
@@ -542,6 +547,20 @@ class Blockify implements BlockifyInterface
     protected function processTextItem(string $text, BlockModelInterface $model): ?string
     {
         $globEscape = $this->config()->isEscape();
+        
+        $itemDataFilterCallback = $this->itemDataFilterCallback;
+
+        if (
+            $itemDataFilterCallback &&
+            is_callable($itemDataFilterCallback) &&
+            !empty($text)
+        ) {
+            $text = $itemDataFilterCallback($text, $model);
+        }
+
+        if (empty($text))
+            return null;
+
         $text = $model->isEscapeText()
             ? ($globEscape
                 ? escape($text)
@@ -554,7 +573,7 @@ class Blockify implements BlockifyInterface
         if ($model->isPreformatted()) {
             $type = 'preformatted';
         }
-        
+
         if (is_not_empty($text) || preg_match('/^\s+$/', $text)) {
             return $this->normalizeInput($text, $type);
         }
@@ -574,6 +593,19 @@ class Blockify implements BlockifyInterface
         if (!$this->isValidArrayItem($itemData, $model)) {
             return null;
         }
+
+        $itemDataFilterCallback = $this->itemDataFilterCallback;
+
+        if (
+            $itemDataFilterCallback &&
+            is_callable($itemDataFilterCallback) &&
+            !empty($itemData)
+        ) {
+            $itemData = $itemDataFilterCallback($itemData, $model);
+        }
+
+        if (empty($itemData))
+            return null;
 
         $result = ['type' => $itemData['type']];
 
@@ -714,6 +746,18 @@ class Blockify implements BlockifyInterface
         return $this;
     }
 
+    /**
+     * Filter of individual data items within each element.
+     * 
+     * @param callable $filter The function being called
+     * @return self
+     */
+    public function itemDataFilter(callable $filter): self
+    {
+        $this->itemDataFilterCallback = $filter;
+
+        return $this;
+    }
     /**
      * Filter data according to validation rules
      * 
