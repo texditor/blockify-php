@@ -366,6 +366,30 @@ interface BlockModelInterface
     public function getCssClasses(): string;
 
     /**
+     * Sets the maximum number of consecutive <br> blocks allowed after this block.
+     * A value of 0 disables breaks. Has no effect on preformatted blocks.
+     *
+     * @param int $count Maximum breaks count
+     * @return self
+     */
+    public function setMaxBreaks(int $count): self;
+
+    /**
+     * Gets the maximum number of consecutive <br> blocks allowed after this block.
+     *
+     * @return int
+     */
+    public function getMaxBreaks(): int;
+
+    /**
+     * Checks whether breaks are allowed after this block.
+     * Returns false for preformatted blocks regardless of maxBreaks value.
+     *
+     * @return bool
+     */
+    public function isBreaks(): bool;
+
+    /**
      * Processes a single custom item before rendering.
      * This hook is called for each item in the block's data array if `isCustomItemStructure()` returns true.
      *

@@ -30,6 +30,7 @@ use Texditor\Blockify\Models\ImageBlock;
 use Texditor\Blockify\Models\HeaderBlock;
 use Texditor\Blockify\Models\OrderedListBlock;
 use Texditor\Blockify\Models\UnorderedListBlock;
+use Texditor\Blockify\Models\TableBlock;
 
 // Initialize configuration
 $config = (new Config())
@@ -49,6 +50,12 @@ $config = (new Config())
             ])
             // or only locally
             ->setSourceRegex(["/^\/uploads\/.*\.(png|jpg|jpeg|gif)$/"]),
+
+        (new TableBlock())
+            ->setMaxRows(50)
+            ->setMaxCols(6)
+            ->setMaxBreaks(2),
+
         (new ImageBlock())
             ->setIsLinkStrategy(true) // the old strategy, use IDs
             // ->setIsMeta(true)

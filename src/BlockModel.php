@@ -172,6 +172,14 @@ class BlockModel implements BlockModelInterface
      */
     protected bool $isPreformatted = false;
 
+    /**
+     * Maximum number of consecutive <br> tags allowed in this block.
+     * 0 means breaks are disabled for this block.
+     *
+     * @var int
+     */
+    protected int $maxBreaks = 0;
+
     private ?ConfigInterface $config = null;
 
     /**
@@ -700,6 +708,40 @@ class BlockModel implements BlockModelInterface
     }
 
     /**
+     * Set the maximum number of consecutive breaks allowed
+     *
+     * @param int $count Maximum breaks count (0 = disabled)
+     * @return self
+     */
+    public function setMaxBreaks(int $count): self
+    {
+        $this->maxBreaks = max(0, $count);
+
+        return $this;
+    }
+
+    /**
+     * Get the maximum number of consecutive breaks
+     *
+     * @return int
+     */
+    public function getMaxBreaks(): int
+    {
+        return $this->maxBreaks;
+    }
+
+    /**
+     * Check if breaks are allowed in this block
+     * Breaks are not allowed in preformatted blocks
+     *
+     * @return bool
+     */
+    public function isBreaks(): bool
+    {
+        return $this->maxBreaks > 0 && !$this->isPreformatted();
+    }
+
+    /**
      * Custom item processing hook (can be overridden in child classes)
      *
      * @param array|string $item The item to process
@@ -864,6 +906,14 @@ class BlockModel implements BlockModelInterface
      * @param string $attributes Tag attributes
      * @return string
      */
+    /**
+     * Render HTML tags with content and attributes
+     *
+     * @param string $tagName HTML tag name
+     * @param string $content Tag content
+     * @param string $attributes Tag attributes
+     * @return string
+     */
     protected function renderTags(
         string $tagName,
         string $content,
@@ -877,6 +927,11 @@ class BlockModel implements BlockModelInterface
         $tagName = isset($renderTagNames[$tagName])
             ? $renderTagNames[$tagName]
             : $tagName;
+
+        // 'br' is a void element
+        if ($tagName === 'br') {
+            return sprintf('<%s%s>', $tagName, $attributes);
+        }
 
         return sprintf(
             '<%s%s>%s</%s>',

@@ -2,6 +2,8 @@
 
 namespace Texditor\Blockify\Interfaces;
 
+use Texditor\Blockify\Exceptions\InvalidJsonDataException;
+
 interface BlockifyInterface
 {
     /**
@@ -51,6 +53,22 @@ interface BlockifyInterface
      * @return array
      */
     public function getData(): array;
+
+    /**
+     * Get the current processed data as a JSON string
+     *
+     * @return string JSON representation of the current data
+     */
+    public function getJson(): string;
+
+    /**
+     * Format the given data as a JSON string
+     *
+     * @param array|string $data Data to format (array or JSON string)
+     * @return string JSON representation of the given data
+     * @throws InvalidJsonDataException
+     */
+    public function toJson(array|string $data): string;
 
     /**
      * Completely removes control characters and special Unicode formatting marks

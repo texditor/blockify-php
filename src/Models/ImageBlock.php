@@ -53,6 +53,18 @@ class ImageBlock extends FileBlock
      */
     private bool $isMetaDesc = true;
 
+    /** 
+     * Allowed Image layout styles
+     * 
+     * @var array  
+     */
+    private array $styles = [
+        'grid',
+        'slider',
+        'single',
+        'row'
+    ];
+
     /**
      * Called after file structures are created
      */
@@ -61,7 +73,7 @@ class ImageBlock extends FileBlock
         $structure = $this->getBlockStructure();
         $structure['style'] = [
             'type' => 'string',
-            'values' => ['grid', 'slider', 'single'],
+            'values' => $this->getStyles(),
         ];
 
         $this->setBlockStructure($structure);
@@ -293,5 +305,28 @@ class ImageBlock extends FileBlock
     public function isMetaDesc(): bool
     {
         return $this->isMetaDesc;
+    }
+
+    /**
+     * Set a list of allowed layout styles
+     *
+     * @param array $styles List of layout styles
+     * @return self
+     */
+    public function setStyles(array $styles): self
+    {
+        $this->styles = $styles;
+
+        return $this;
+    }
+
+    /**
+     * Get a list of allowed layout styles
+     *
+     * @return array
+     */
+    public function getStyles(): array
+    {
+        return $this->styles;
     }
 }
