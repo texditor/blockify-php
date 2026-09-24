@@ -94,8 +94,16 @@ class Blockify implements BlockifyInterface
      */
     protected function isValidArrayItem(array $item, BlockModelInterface $model): bool
     {
-        return !empty($item['type'])
-            && !empty($item['data'])
+        if (empty($item['type']) || !is_string($item['type'])) {
+            return false;
+        }
+
+        // 'br' is a special void item inside block data
+        if ($item['type'] === 'br') {
+            return $model->isBreaks();
+        }
+
+        return !empty($item['data'])
             && in_array(
                 $item['type'],
                 $model->getAllowedTags()
@@ -212,6 +220,8 @@ class Blockify implements BlockifyInterface
     ): bool {
         return is_array($current)
             && is_array($next)
+            && ($current['type'] ?? null) !== 'br'
+            && ($next['type'] ?? null) !== 'br'
             && $next['type'] === $current['type']
             && empty($current['attr'])
             && empty($next['attr'])
@@ -283,7 +293,7 @@ class Blockify implements BlockifyInterface
             if ($model->isRemoveControlCharacters() && !empty($block['data'])) {
                 $block['data'] = json_decode(
                     $this->removeControlCharacters(
-                        json_encode($block['data'], JSON_UNESCAPED_UNICODE)
+                        $this->toJson($block['data'])
                     ),
                     true
                 );
@@ -501,7 +511,8 @@ class Blockify implements BlockifyInterface
     }
 
     /**
-     * Merge similar adjacent items according to model rules
+     * Merge similar adjacent items according to model rules.
+     * Also collapses consecutive 'br' items according to the model's maxBreaks.
      * 
      * @param array $items Items to process
      * @param BlockModelInterface $model Model defining rules
@@ -516,10 +527,31 @@ class Blockify implements BlockifyInterface
         $result = [];
         $i = 0;
         $count = count($items);
+        $maxBreaks = $model->isBreaks() ? $model->getMaxBreaks() : 0;
 
         while ($i < $count) {
             $current = $items[$i];
             $next = $items[$i + 1] ?? null;
+
+            // Collapse consecutive 'br' items
+            if (is_array($current) && ($current['type'] ?? null) === 'br') {
+                $breakCount = 1;
+                while (
+                    $i + $breakCount < $count &&
+                    is_array($items[$i + $breakCount]) &&
+                    ($items[$i + $breakCount]['type'] ?? null) === 'br'
+                ) {
+                    $breakCount++;
+                }
+
+                $allowed = min($breakCount, $maxBreaks);
+                for ($b = 0; $b < $allowed; $b++) {
+                    $result[] = ['type' => 'br'];
+                }
+
+                $i += $breakCount;
+                continue;
+            }
 
             if ($this->shouldMergeTextItems($current, $next)) {
                 $result[] = $current . ' ' . $next;
@@ -547,7 +579,7 @@ class Blockify implements BlockifyInterface
     protected function processTextItem(string $text, BlockModelInterface $model): ?string
     {
         $globEscape = $this->config()->isEscape();
-        
+
         $itemDataFilterCallback = $this->itemDataFilterCallback;
 
         if (
@@ -607,6 +639,11 @@ class Blockify implements BlockifyInterface
         if (empty($itemData))
             return null;
 
+        // 'br' has no data and no attributes — return as is
+        if ($itemData['type'] === 'br') {
+            return ['type' => 'br'];
+        }
+
         $result = ['type' => $itemData['type']];
 
         if (isset($itemData['attr']) && is_array($itemData['attr'])) {
@@ -651,7 +688,10 @@ class Blockify implements BlockifyInterface
      */
     public function setData($data): self
     {
-        $input = $this->parseInputData($data);
+        $input = json_decode(
+            $this->toJson($data),
+            true
+        );
 
         if (!empty($input) && Arr::isList($input)) {
             $this->data = $this->processBlocks(
@@ -663,33 +703,6 @@ class Blockify implements BlockifyInterface
     }
 
     /**
-     * Process input data that could be either array or JSON string
-     *
-     * @param mixed $data Input data to parse
-     * @return array
-     */
-    protected function parseInputData($data): array
-    {
-        if (is_string($data)) {
-            if (!Valid::json($data)) {
-                if ($this->config()->isDev())
-                    throw new InvalidJsonDataException('Invalid JSON data');
-
-                return [];
-            }
-        }
-
-        $convert = is_string($data)
-            ? $data
-            : json_encode($data, JSON_UNESCAPED_UNICODE);
-
-        return json_decode(
-            $convert,
-            true
-        );
-    }
-
-    /**
      * Get processed data
      * 
      * @return array Processed blocks data
@@ -697,6 +710,49 @@ class Blockify implements BlockifyInterface
     public function getData(): array
     {
         return $this->data;
+    }
+
+    /**
+     * Get the current processed data as a JSON string
+     *
+     * @return string JSON representation of the current data
+     */
+    public function getJson(): string
+    {
+        return $this->toJson($this->data);
+    }
+
+    /**
+     * Format the given data as a JSON string
+     *
+     * @param array|string $data Data to format (array or JSON string)
+     * @return string JSON representation of the given data
+     * @throws InvalidJsonDataException
+     */
+    public function toJson(array|string|null $data): string
+    {
+        if ($data === null) {
+            return '[]';
+        }
+
+        if (is_string($data)) {
+            if (!Valid::json($data)) {
+                if ($this->config()->isDev()) {
+                    throw new InvalidJsonDataException('Invalid JSON data');
+                }
+
+                return '[]';
+            }
+
+            return $data;
+        }
+
+        $json = json_encode(
+            $data,
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        );
+
+        return $json === false ? '[]' : $json;
     }
 
     /**
