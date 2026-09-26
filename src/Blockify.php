@@ -69,20 +69,24 @@ class Blockify implements BlockifyInterface
      */
     protected function isValidBlock($item): bool
     {
-        if (
-            !(
-                isset($item['type']) &&
-                is_string($item['type']) &&
-                $this->config()->getModel($item['type']) !== null &&
-                !empty($item['data']) &&
-                is_array($item['data']) &&
-                Arr::isList($item['data'])
-            )
-        ) {
+        if (empty($item['type']))
             return false;
-        }
 
-        return true;
+        if (!is_string($item['type']))
+            return false;
+
+        $model = $this->config()
+            ->getModel($item['type'] ?? '');
+
+        if (empty($model))
+            return false;
+
+        if ($model->isNoData())
+            return !array_key_exists('data', $item);
+
+        return !empty($item['data'])
+            && is_array($item['data'])
+            && Arr::isList($item['data']);
     }
 
     /**
@@ -239,11 +243,28 @@ class Blockify implements BlockifyInterface
         $output = [];
 
         foreach ($rawData as $blockIndex => $block) {
-
             if ($this->isValidBlock($block)) {
                 $model = $this->config()->getModel($block['type']);
                 $structureKeys = array_keys($model->getBlockStructure());
+
+                if ($model->isNoData()) {
+                    unset($block['data']);
+
+                    foreach ($block as $blockKey => $blockValue) {
+                        if (!in_array($blockKey, $structureKeys)) {
+                            unset($block[$blockKey]);
+                        }
+                    }
+
+                    $output[] = $block;
+                    continue;
+                }
+
                 $block = $this->filterDataWithRules($block, $model->getBlockStructure());
+
+                if (!is_array($block)) {
+                    continue;
+                }
 
                 // Keep only keys that exist in block structure
                 foreach ($block as $blockKey => $blockValue) {
@@ -259,16 +280,24 @@ class Blockify implements BlockifyInterface
                         'code' => 'type_required',
                         'message' => 'The type field is required',
                         'data' => $block,
-                        'index' =>  $blockIndex
+                        'index' => $blockIndex
                     ]);
                 }
 
-                if (empty($block['data'])) {
+                $blockModel = is_string($block['type'] ?? null)
+                    ? $this->config()->getModel($block['type'])
+                    : null;
+
+                if (
+                    $blockModel !== null &&
+                    !$blockModel->isNoData() &&
+                    empty($block['data'])
+                ) {
                     $this->addError('data', [
                         'code' => 'data_required',
                         'message' => 'The data field is required',
                         'data' => $block,
-                        'index' =>  $blockIndex
+                        'index' => $blockIndex
                     ]);
                 }
             }
@@ -289,6 +318,22 @@ class Blockify implements BlockifyInterface
 
         foreach ($blocks as $key => $block) {
             $model = $this->config()->getModel($block['type']);
+
+            if ($model->isNoData()) {
+                $processedBlock = $block;
+
+                $callback = $this->filterCallback;
+
+                if ($callback && is_callable($callback)) {
+                    if ($callback($block, $key, $model)) {
+                        $output[$key] = $processedBlock;
+                    }
+                } else {
+                    $output[$key] = $processedBlock;
+                }
+
+                continue;
+            }
 
             if ($model->isRemoveControlCharacters() && !empty($block['data'])) {
                 $block['data'] = json_decode(
@@ -328,12 +373,12 @@ class Blockify implements BlockifyInterface
 
             if (empty($processedBlock['data'])) {
                 continue;
-            } else {
-                $processedBlock['data'] = $this->mergeSimilarItems(
-                    $processedBlock['data'],
-                    $model
-                );
             }
+
+            $processedBlock['data'] = $this->mergeSimilarItems(
+                $processedBlock['data'],
+                $model
+            );
 
             $callback = $this->filterCallback;
             $transformItemCallback = $model->getTransformItemCallback();
@@ -379,7 +424,7 @@ class Blockify implements BlockifyInterface
         $outputItem = $block;
         $outputItem['data'] = [];
 
-        foreach ($block['data'] as $itemData) {
+        foreach (($block['data'] ?? []) as $itemData) {
             $primaryChildren = $model->getPrimaryChildren();
 
             if (!empty($primaryChildren)) {
