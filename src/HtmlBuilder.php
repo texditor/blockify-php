@@ -45,15 +45,26 @@ class HtmlBuilder implements HtmlBuilderInterface
         $html = '';
 
         foreach ($blocks as $block) {
-            if (!empty($block['type']) && !empty($block['data'])) {
-                $model = $this->config()->getModel($block['type']);
+            if (empty($block['type'])) {
+                continue;
+            }
 
-                if ($model instanceof BlockModelInterface) {
-                    $html .= $model->renderBlock($block);
-                }
+            $model = $this->config()->getModel($block['type']);
+
+            if (!$model instanceof BlockModelInterface) {
+                continue;
+            }
+
+            if ($model->isNoData()) {
+                $html .= $model->renderBlock($block);
+                continue;
+            }
+
+            if (!empty($block['data'])) {
+                $html .= $model->renderBlock($block);
             }
         }
-        
+
         return $html;
     }
 

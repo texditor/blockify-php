@@ -367,7 +367,6 @@ interface BlockModelInterface
 
     /**
      * Sets the maximum number of consecutive <br> blocks allowed after this block.
-     * A value of 0 disables breaks. Has no effect on preformatted blocks.
      *
      * @param int $count Maximum breaks count
      * @return self
@@ -383,11 +382,57 @@ interface BlockModelInterface
 
     /**
      * Checks whether breaks are allowed after this block.
-     * Returns false for preformatted blocks regardless of maxBreaks value.
      *
      * @return bool
      */
     public function isBreaks(): bool;
+
+    /**
+     * Sets whether the block may exist without a "data" field.
+     *
+     * @param bool $status
+     * @return self
+     */
+    public function setNoData(bool $status): self;
+
+    /**
+     * Checks if the block may exist without a "data" field.
+     *
+     * @return bool
+     */
+    public function isNoData(): bool;
+
+    /**
+     * Set attributes rendered on the block's root HTML tag.
+     *
+     * @param array<string, string|bool> $attributes
+     * @return self
+     */
+    public function setRenderAttributes(array $attributes): self;
+
+    /**
+     * Get attributes rendered on the block's root HTML tag.
+     *
+     * @return array<string, string|bool>
+     */
+    public function getRenderAttributes(): array;
+
+    /**
+     * Set (replace) a single attribute rendered on the block's root HTML tag.
+     *
+     * @param string $name
+     * @param string|bool $value
+     * @return self
+     */
+    public function setRenderAttribute(string $name, string|bool $value): self;
+
+    /**
+     * Get a single attribute rendered on the block's root HTML tag.
+     *
+     * @param string $name
+     * @return string|bool|null
+     */
+    public function getRenderAttribute(string $name): string|bool|null;
 
     /**
      * Processes a single custom item before rendering.

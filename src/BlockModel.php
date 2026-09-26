@@ -180,6 +180,20 @@ class BlockModel implements BlockModelInterface
      */
     protected int $maxBreaks = 0;
 
+    /**
+     * Allow the block to be rendered without a "data" field
+     *
+     * @var bool
+     */
+    protected bool $noData = false;
+
+    /**
+     * Attributes applied to the block's root HTML tag during rendering.
+     *
+     * @var array<string, string|bool>
+     */
+    protected array $renderAttributes = [];
+
     private ?ConfigInterface $config = null;
 
     /**
@@ -742,6 +756,77 @@ class BlockModel implements BlockModelInterface
     }
 
     /**
+     * Set whether the block may exist without "data"
+     *
+     * @param bool $status
+     * @return self
+     */
+    public function setNoData(bool $status): self
+    {
+        $this->noData = $status;
+
+        return $this;
+    }
+
+    /**
+     * Check if the block may exist without "data"
+     *
+     * @return bool
+     */
+    public function isNoData(): bool
+    {
+        return $this->noData;
+    }
+
+    /**
+     * Set attributes rendered on the block's root tag.
+     *
+     * @param array<string, string|bool> $attributes
+     * @return self
+     */
+    public function setRenderAttributes(array $attributes): self
+    {
+        $this->renderAttributes = $attributes;
+
+        return $this;
+    }
+
+    /**
+     * Get attributes rendered on the block's root tag.
+     *
+     * @return array<string, string|bool>
+     */
+    public function getRenderAttributes(): array
+    {
+        return $this->renderAttributes;
+    }
+
+    /**
+     * Set (replace) a single attribute rendered on the block's root HTML tag.
+     *
+     * @param string $name
+     * @param string|bool $value
+     * @return self
+     */
+    public function setRenderAttribute(string $name, string|bool $value): self
+    {
+        $this->renderAttributes[$name] = $value;
+
+        return $this;
+    }
+
+    /**
+     * Get a single attribute rendered on the block's root HTML tag.
+     *
+     * @param string $name
+     * @return string|bool|null
+     */
+    public function getRenderAttribute(string $name): string|bool|null
+    {
+        return $this->renderAttributes[$name] ?? null;
+    }
+
+    /**
      * Custom item processing hook (can be overridden in child classes)
      *
      * @param array|string $item The item to process
@@ -816,6 +901,30 @@ class BlockModel implements BlockModelInterface
                     $htmlBlockAttributes[$attrKey] = $attribute;
                 }
             }
+        }
+
+        foreach ($this->renderAttributes as $name => $value) {
+            if ($name === 'class') {
+                continue;
+            }
+
+            if (!array_key_exists($name, $htmlBlockAttributes)) {
+                $htmlBlockAttributes[$name] = $value;
+            }
+        }
+
+        $classes = [];
+
+        if (!empty($htmlBlockAttributes['class'])) {
+            $classes[] = $htmlBlockAttributes['class'];
+        }
+
+        if (!empty($this->renderAttributes['class'])) {
+            $classes[] = $this->renderAttributes['class'];
+        }
+
+        if (!empty($classes)) {
+            $htmlBlockAttributes['class'] = implode(' ', $classes);
         }
 
         $attrs = $this->renderAttributes($htmlBlockAttributes);
