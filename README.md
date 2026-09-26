@@ -31,6 +31,7 @@ use Texditor\Blockify\Models\HeaderBlock;
 use Texditor\Blockify\Models\OrderedListBlock;
 use Texditor\Blockify\Models\UnorderedListBlock;
 use Texditor\Blockify\Models\TableBlock;
+use Texditor\Blockify\Models\DividerBlock;
 
 // Initialize configuration
 $config = (new Config())
@@ -50,6 +51,9 @@ $config = (new Config())
             ])
             // or only locally
             ->setSourceRegex(["/^\/uploads\/.*\.(png|jpg|jpeg|gif)$/"]),
+   
+        (new DividerBlock()),
+            ->setRenderAttribute('class', 'my-divider'),
 
         (new TableBlock())
             ->setMaxRows(50)
