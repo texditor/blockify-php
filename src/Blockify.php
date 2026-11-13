@@ -871,7 +871,7 @@ class Blockify implements BlockifyInterface
         $validator = new Validation($rules);
         $validator->validate($data);
         $errors = $validator->getErrors();
-        $verified = array_intersect_key($data, $rules);
+        $verified = $validator->getAll();
         $isRequiredInvalid = false;
 
         foreach ($errors as $name => $errorList) {

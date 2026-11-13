@@ -296,6 +296,17 @@ interface BlockModelInterface
     public function setSourceProtocols(array $protocols): self;
 
     /**
+     * Disable allowed source protocols.
+     *
+     * Convenience wrapper that clears the allowed protocols list.
+     * Combined with URL normalization, only relative URLs will be allowed.
+     *
+     * @param bool $status True to disable protocols (clear the list), false to keep them
+     * @return self
+     */
+    public function disableSourceProtocols(bool $status = true): self;
+
+    /**
      * Gets the list of allowed URL protocols for external resources (e.g., 'https', 'http').
      * Used to validate `src` and `href` attributes.
      *
@@ -403,6 +414,34 @@ interface BlockModelInterface
     public function isNoData(): bool;
 
     /**
+     * Enable or disable automatic source URL normalization.
+     *
+     * When enabled and no source protocols are allowed, URLs without a scheme
+     * and without a leading slash are prefixed with "/" before validation.
+     *
+     * @param bool $status True to enable normalization, false to disable
+     * @return self
+     */
+    public function setNormalizeSource(bool $status): self;
+
+    /**
+     * Check if automatic source URL normalization is enabled.
+     *
+     * @return bool
+     */
+    public function isNormalizeSource(): bool;
+
+    /**
+     * Disable automatic source URL normalization.
+     *
+     * Convenience wrapper around setNormalizeSource().
+     *
+     * @param bool $status True to disable normalization, false to enable
+     * @return self
+     */
+    public function disableNormalizeSource(bool $status = true): self;
+
+    /**
      * Set attributes rendered on the block's root HTML tag.
      *
      * @param array<string, string|bool> $attributes
@@ -458,4 +497,11 @@ interface BlockModelInterface
      * This is preferable to using the constructor for complex setup.
      */
     public function onLoad(): void;
+
+    /**
+     * Internal parent-only hook, called once during model instantiation.
+     * Not meant to be overridden or called from subclasses — use onLoad() instead.
+     * @internal
+     */
+    public function __onLoad(): void;
 }

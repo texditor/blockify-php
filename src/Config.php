@@ -69,6 +69,7 @@ class Config implements ConfigInterface
             $name = $model->getInputName();
             $model->setConfig($this);
             $model->onLoad();
+            $model->__onLoad();
 
             if (!empty($name))
                 $this->blockModels[$name] = $model;
