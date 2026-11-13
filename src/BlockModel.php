@@ -121,19 +121,7 @@ class BlockModel implements BlockModelInterface
      * 
      *  @var array 
      */
-    protected array $tagAttributeRules = [
-        'a' => [
-            'href' => [
-                'type' => 'string',
-                'required' => true,
-                'allowedProtocol' => [['https', 'http', 'ftp']]
-            ],
-            'target' => [
-                'type' => 'string',
-                'values' => ['_blank']
-            ]
-        ]
-    ];
+    protected array $tagAttributeRules = [];
 
     /** 
      * Validation rules for the block's overall structure
@@ -188,6 +176,13 @@ class BlockModel implements BlockModelInterface
     protected bool $noData = false;
 
     /**
+     * Whether to normalize source URLs (prepend "/") when no protocols are allowed.
+     *
+     * @var bool
+     */
+    protected bool $normalizeSource = true;
+
+    /**
      * Attributes applied to the block's root HTML tag during rendering.
      *
      * @var array<string, string|bool>
@@ -232,6 +227,14 @@ class BlockModel implements BlockModelInterface
      * Hook method for model initialization (can be overridden in child classes)
      */
     public function onLoad(): void {}
+
+    /**
+     * Hook method for model initialization (only the parent class)
+     */
+    public function __onLoad(): void
+    {
+        $this->prepareLinks();
+    }
 
     /**
      * Set whether text content should be HTML-escaped
@@ -630,6 +633,24 @@ class BlockModel implements BlockModelInterface
     }
 
     /**
+     * Disable allowed source protocols.
+     *
+     * Convenience wrapper that clears the allowed protocols list.
+     * Combined with URL normalization, only relative URLs will be allowed.
+     *
+     * @param bool $status True to disable protocols (clear the list), false to keep them
+     * @return self
+     */
+    public function disableSourceProtocols(bool $status = true): self
+    {
+        if ($status) {
+            $this->sourceProtocols = [];
+        }
+
+        return $this;
+    }
+
+    /**
      * Get source regular expressions
      *
      * @return array
@@ -776,6 +797,110 @@ class BlockModel implements BlockModelInterface
     public function isNoData(): bool
     {
         return $this->noData;
+    }
+
+    /**
+     * Builds validation rules for <a> tag attributes (href, target)
+     * based on allowed source protocols.
+     *
+     * @return void
+     */
+    protected function prepareLinks(): void
+    {
+        $href =  [
+            'type' => 'string',
+            'required' => true,
+        ];
+
+        $sourceProtocols = $this->getSourceProtocols();
+
+        if (!empty($sourceProtocols)) {
+            $href['allowedProtocol'] = $sourceProtocols;
+        } elseif ($this->isNormalizeSource()) {
+            $href['before'] = function ($value) {
+                return $this->normalizeSource($value);
+            };
+        }
+
+        $this->tagAttributeRules = [
+            'a' => [
+                'href' => $href,
+                'target' => [
+                    'type' => 'string',
+                    'values' => ['_blank']
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Enable or disable automatic source URL normalization.
+     *
+     * When enabled and no source protocols are allowed, URLs without a scheme
+     * and without a leading slash are prefixed with "/" before validation.
+     *
+     * @param bool $status True to enable normalization, false to disable
+     * @return self
+     */
+    public function setNormalizeSource(bool $status): self
+    {
+        $this->normalizeSource = $status;
+
+        return $this;
+    }
+
+    /**
+     * Check if automatic source URL normalization is enabled.
+     *
+     * @return bool
+     */
+    public function isNormalizeSource(): bool
+    {
+        return $this->normalizeSource;
+    }
+
+    /**
+     * Disable automatic source URL normalization.
+     *
+     * Convenience wrapper around setNormalizeSource().
+     *
+     * @param bool $status True to disable normalization, false to enable
+     * @return self
+     */
+    public function disableNormalizeSource(bool $status = true): self
+    {
+        return $this->setNormalizeSource(!$status);
+    }
+
+    /**
+     * Normalizes a URL: keeps scheme-based and root-relative URLs as is,
+     * prepends "/" to everything else.
+     *
+     * @param string $url
+     * @return string
+     */
+    protected function normalizeSource(string $url): string
+    {
+        $url = trim($url);
+
+        if ($url === '') {
+            return $url;
+        }
+
+        $scheme = parse_url($url, PHP_URL_SCHEME);
+
+        // Has a scheme (http, https, ftp, mailto, ...) — leave as is
+        if ($scheme !== null && $scheme !== false && $scheme !== '') {
+            return $url;
+        }
+
+        // Already starts with "/"
+        if (str_starts_with($url, '/')) {
+            return $url;
+        }
+
+        // No scheme, no leading slash → prepend "/"
+        return '/' . $url;
     }
 
     /**
